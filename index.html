@@ -15,6 +15,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 <!-- React -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -37,12 +38,12 @@
 html,body,#root{height:100%;font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gray-100);color:var(--gray-900);}
 body{overflow-x:hidden;}
 /* Layout */
-.app-shell{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:#fff;position:relative;}
+.app-shell{display:flex;flex-direction:column;height:100%;max-width:640px;margin:0 auto;background:#fff;position:relative;box-shadow:0 0 40px rgba(0,0,0,.08);}
 .top-bar{background:var(--orange);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .top-bar h1{font-size:18px;font-weight:700;flex:1;}
 .top-bar .top-actions{display:flex;gap:8px;align-items:center;}
 .screen{flex:1;overflow-y:auto;padding:16px;padding-bottom:80px;}
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--gray-200);display:flex;z-index:100;}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:#fff;border-top:1px solid var(--gray-200);display:flex;z-index:100;}
 .bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:none;background:none;font-size:10px;color:var(--gray-500);cursor:pointer;transition:color .2s;}
 .bottom-nav button.active{color:var(--orange);}
 .bottom-nav button svg{width:22px;height:22px;}
@@ -90,7 +91,7 @@ body{overflow-x:hidden;}
 .section-head h2{font-size:16px;font-weight:700;color:var(--gray-800);}
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
-.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;padding:20px;}
 .modal-box.center{border-radius:16px;margin:16px;max-height:85vh;}
 .modal-handle{width:40px;height:4px;background:var(--gray-300);border-radius:2px;margin:0 auto 16px;}
 /* Loading */
@@ -98,7 +99,7 @@ body{overflow-x:hidden;}
 .spinner{width:44px;height:44px;border:4px solid var(--gray-200);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* Toast */
-.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:440px;}
+.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:600px;}
 .toast{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;color:#fff;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;text-align:center;}
 .toast-success{background:var(--green);}
 .toast-error{background:var(--red);}
@@ -183,9 +184,19 @@ body{overflow-x:hidden;}
 .toggle input:checked+.toggle-slider{background:var(--orange);}
 .toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
 /* Fab */
-.fab{position:fixed;bottom:90px;right:calc(50% - 220px);width:52px;height:52px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(244,121,32,.4);display:flex;align-items:center;justify-content:center;z-index:99;transition:all .2s;}
+.fab{position:fixed;bottom:90px;right:calc(50% - 300px);width:52px;height:52px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 12px rgba(244,121,32,.4);display:flex;align-items:center;justify-content:center;z-index:99;transition:all .2s;}
 .fab:hover{background:var(--orange-d);transform:scale(1.05);}
-@media(max-width:480px){.fab{right:16px;}}
+@media(max-width:640px){.fab{right:16px;}}
+
+@media(min-width:641px){
+  html,body,#root{background:var(--gray-100);}
+  .screen{padding:20px 24px 100px;}
+  .top-bar{padding:14px 24px;}
+  .bottom-nav button{padding:10px 4px;font-size:11px;}
+  .card{padding:20px;}
+  .field input,.field select,.field textarea{font-size:15px;}
+  .btn{font-size:15px;}
+}
 </style>
 </head>
 <body>
@@ -204,6 +215,7 @@ const FIREBASE_CONFIG={
 firebase.initializeApp(FIREBASE_CONFIG);
 const db=firebase.database();
 const auth=firebase.auth();
+const storage=firebase.storage();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 </script>
 <script>
@@ -735,26 +747,58 @@ function PhotoCapture({photos=[], onAdd, onRemove, maxPhotos=6}){
   );
 }
 
-// ─── FILE LINK FIELD ──────────────────────────────────────────────────────────
+// ─── FILE FIELD (upload PDF or paste link) ────────────────────────────────────
 function FileLinkField({label, icon, value, onChange, placeholder}){
+  const [uploading,setUploading]=useState(false);
+  const [mode,setMode]=useState('link'); // 'link' | 'upload'
+  const inputRef=React.useRef();
+
+  async function handleUpload(e){
+    const file=e.target.files[0]; if(!file) return;
+    setUploading(true);
+    try{
+      const path=`operaciones_files/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+      const snap=await storage.ref(path).put(file);
+      const url=await snap.ref.getDownloadURL();
+      onChange(url);
+    }catch(err){
+      alert('Error al subir. Usá el link de Google Drive en su lugar.');
+    }
+    setUploading(false);
+    if(e.target) e.target.value='';
+  }
+
   return (
     <div style={{marginBottom:12}}>
-      <label style={{fontSize:13,fontWeight:700,color:'var(--gray-700)',display:'block',marginBottom:5}}>{icon} {label}</label>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+        <label style={{fontSize:13,fontWeight:700,color:'var(--gray-700)'}}>{icon} {label}</label>
+        {!value && (
+          <div style={{display:'flex',gap:4}}>
+            <button onClick={()=>setMode('link')} style={{fontSize:11,padding:'2px 8px',borderRadius:6,border:'1px solid var(--gray-300)',background:mode==='link'?'var(--orange)':'#fff',color:mode==='link'?'#fff':'var(--gray-600)',cursor:'pointer',fontWeight:600}}>Link</button>
+            <button onClick={()=>setMode('upload')} style={{fontSize:11,padding:'2px 8px',borderRadius:6,border:'1px solid var(--gray-300)',background:mode==='upload'?'var(--orange)':'#fff',color:mode==='upload'?'#fff':'var(--gray-600)',cursor:'pointer',fontWeight:600}}>📤 PDF</button>
+          </div>
+        )}
+      </div>
       {value ? (
         <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--blue-l)',borderRadius:8,border:'1.5px solid var(--blue)'}}>
           <a href={value} target="_blank" rel="noopener noreferrer" style={{flex:1,fontSize:13,fontWeight:600,color:'var(--blue)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-            🔗 Abrir {label}
+            🔗 Ver {label}
           </a>
           <button onClick={()=>onChange('')} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:16,flexShrink:0}}>✕</button>
         </div>
+      ) : mode==='upload' ? (
+        <div>
+          <button onClick={()=>inputRef.current?.click()} disabled={uploading}
+            style={{width:'100%',padding:'10px 12px',border:'1.5px dashed var(--orange)',borderRadius:8,background:'var(--orange-l)',cursor:'pointer',fontSize:13,color:'var(--orange-d)',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            {uploading?'⏳ Subiendo PDF...':'📄 Subir PDF desde la computadora'}
+          </button>
+          <input ref={inputRef} type="file" accept="application/pdf,image/*" onChange={handleUpload} style={{display:'none'}}/>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:3}}>O cambiá a "Link" para pegar un link de Google Drive</p>
+        </div>
       ) : (
-        <input
-          type="url"
-          value={value}
-          onChange={e=>onChange(e.target.value)}
+        <input type="url" value={value} onChange={e=>onChange(e.target.value)}
           placeholder={placeholder||'Pegá el link de Google Drive...'}
-          style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14,background:'#fff'}}
-        />
+          style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14,background:'#fff'}}/>
       )}
     </div>
   );
@@ -1406,7 +1450,13 @@ function JobDetailScreen({user, jobId, navigate, goBack, showToast, confirm}){
         {(job.clientAddress||job.clientPhone) && (
           <div className="card">
             <div className="card-title">Datos del cliente</div>
-            {job.clientAddress && <p style={{fontSize:13,marginBottom:6}}>📍 {job.clientAddress}</p>}
+            {job.clientAddress && (
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                <p style={{fontSize:13,flex:1}}>📍 {job.clientAddress}</p>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.clientAddress)}`} target="_blank" rel="noopener noreferrer"
+                  className="btn btn-sm btn-secondary" style={{textDecoration:'none',flexShrink:0}}>🗺️ Maps</a>
+              </div>
+            )}
             {job.clientPhone && (
               <div style={{display:'flex',gap:8,alignItems:'center'}}>
                 <p style={{fontSize:13}}>📱 {job.clientPhone}</p>
@@ -1562,7 +1612,7 @@ function JobDetailScreen({user, jobId, navigate, goBack, showToast, confirm}){
         {/* Status actions */}
         <div className="divider"/>
         {canEditJob && job.status==='pendiente' && (
-          <button className="btn btn-primary btn-full" onClick={()=>changeStatus('en_curso')}>▶ Marcar como En curso</button>
+          <button className="btn btn-primary btn-full" onClick={()=>changeStatus('en_curso')}>▶ Marcar como En curso (empieza la obra)</button>
         )}
         {canEditJob && job.status==='en_curso' && (
           <button className="btn btn-success btn-full" onClick={()=>changeStatus('completado')}>✓ Marcar como Completado</button>
@@ -1575,7 +1625,19 @@ function JobDetailScreen({user, jobId, navigate, goBack, showToast, confirm}){
         {canExecute && (job.status==='pendiente'||job.status==='en_curso') && (
           <button className="btn btn-primary btn-full" style={{marginTop:12,fontSize:16,padding:'14px'}}
             onClick={()=>navigate('jobExecution',{jobId})}>
-            🛠️ Ejecutar trabajo
+            🛠️ Ir al panel de ejecución paso a paso
+          </button>
+        )}
+
+        {/* Notify team via WhatsApp */}
+        {canEdit(user) && (job.team||[]).length>0 && (
+          <button className="btn btn-full" style={{marginTop:8,background:'#25d366',color:'#fff',fontWeight:700}}
+            onClick={()=>{
+              const appUrl='https://mundom-apps.github.io/mundom-operaciones/';
+              const msg=`Hola! Se te asignó el trabajo *${job.title}* para *${job.client}* el día *${job.date}*${job.clientAddress?' en '+job.clientAddress:''}.\n\nIngresá a Mundo M Operaciones para ver los detalles:\n${appUrl}`;
+              window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+            }}>
+            📲 Notificar equipo por WhatsApp
           </button>
         )}
 
@@ -1588,7 +1650,7 @@ function JobDetailScreen({user, jobId, navigate, goBack, showToast, confirm}){
         {(canExecute||canEditJob) && job.status==='en_curso' && (
           <button className="btn btn-success btn-full" style={{marginTop:8}}
             onClick={()=>navigate('conformity',{jobId})}>
-            ✍️ Conformidad del cliente
+            ✍️ Registrar conformidad y cierre del cliente
           </button>
         )}
 
@@ -1747,6 +1809,13 @@ function JobCreateScreen({user, editJobId, navigate, goBack, showToast}){
       } else {
         await db.ref('operaciones_jobs').push(jobData);
         showToast('Trabajo creado','success');
+        // WhatsApp notification to team
+        if(team.length>0){
+          const appUrl='https://mundom-apps.github.io/mundom-operaciones/';
+          const msg=`Hola! Se te asignó el trabajo *${title.trim()}* para el cliente *${client.trim()}* en la fecha *${date}*${clientAddress?' — '+clientAddress:''}.\n\nIngresá a la app de Mundo M Operaciones para ver los detalles:\n${appUrl}`;
+          const waBase='https://wa.me/?text='+encodeURIComponent(msg);
+          window.open(waBase,'_blank');
+        }
       }
       goBack();
     } catch(e){
@@ -1829,7 +1898,13 @@ function JobCreateScreen({user, editJobId, navigate, goBack, showToast}){
               <input type="email" value={clientEmail} onChange={e=>setClientEmail(e.target.value)} placeholder="cliente@empresa.com"/>
             </Field>
             <Field label="Dirección de la obra">
-              <input value={clientAddress} onChange={e=>setClientAddress(e.target.value)} placeholder="Dirección completa"/>
+              <div style={{display:'flex',gap:8}}>
+                <input value={clientAddress} onChange={e=>setClientAddress(e.target.value)} placeholder="Ej: Av. 18 de Julio 1234, Montevideo" style={{flex:1}}/>
+                {clientAddress && (
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clientAddress)}`} target="_blank" rel="noopener noreferrer"
+                    className="btn btn-secondary btn-sm" style={{flexShrink:0,textDecoration:'none'}}>📍 Maps</a>
+                )}
+              </div>
             </Field>
             <Field label="Días de producción estimados">
               <input type="number" value={productionDays} onChange={e=>setProductionDays(e.target.value)} placeholder="Ej: 15"/>
