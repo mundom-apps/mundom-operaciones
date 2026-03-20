@@ -1,0 +1,3405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#F47920"/>
+<title>Mundo M — Operaciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+<!-- React -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<!-- Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --orange:#F47920;--orange-d:#d4651a;--orange-l:#fff3ea;
+  --gray-900:#111827;--gray-800:#1f2937;--gray-700:#374151;
+  --gray-600:#4b5563;--gray-500:#6b7280;--gray-400:#9ca3af;
+  --gray-300:#d1d5db;--gray-200:#e5e7eb;--gray-100:#f3f4f6;--gray-50:#f9fafb;
+  --green:#16a34a;--green-l:#dcfce7;--red:#dc2626;--red-l:#fee2e2;
+  --blue:#2563eb;--blue-l:#dbeafe;--yellow:#ca8a04;--yellow-l:#fef9c3;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --radius:12px;--shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.08);
+  --shadow-lg:0 10px 25px rgba(0,0,0,.15);
+  --sidebar:240px;
+}
+html,body,#root{height:100%;font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--gray-100);color:var(--gray-900);}
+body{overflow-x:hidden;background:#f0f2f5;}
+
+/* ── MOBILE LAYOUT ── */
+.app-shell{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto;background:#fff;position:relative;}
+.top-bar{background:var(--orange);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.top-bar h1{font-size:18px;font-weight:800;flex:1;}
+.screen{flex:1;overflow-y:auto;padding:16px;padding-bottom:80px;}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--gray-200);display:flex;z-index:100;}
+.bottom-nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:none;background:none;font-size:10px;color:var(--gray-500);cursor:pointer;transition:color .2s;}
+.bottom-nav button.active{color:var(--orange);}
+.bottom-nav button svg{width:22px;height:22px;}
+
+/* ── DESKTOP LAYOUT ── */
+@media(min-width:769px){
+  html,body,#root{background:#f0f2f5;}
+  .app-shell{max-width:100%;height:100vh;overflow:hidden;background:transparent;box-shadow:none;flex-direction:row;}
+  /* Sidebar */
+  .bottom-nav{
+    position:fixed;left:0;top:0;bottom:0;width:var(--sidebar);
+    flex-direction:column;justify-content:flex-start;align-items:stretch;
+    border-top:none;border-right:1px solid var(--gray-200);
+    padding:0 12px 20px;background:#fff;
+    box-shadow:2px 0 12px rgba(0,0,0,.06);
+    transform:none;max-width:none;gap:4px;
+    overflow-y:auto;
+  }
+  .bottom-nav::before{
+    content:'Mundo M';display:block;
+    font-size:20px;font-weight:900;color:var(--orange);
+    padding:20px 12px 16px;letter-spacing:-0.5px;
+    border-bottom:1px solid var(--gray-100);margin-bottom:12px;
+  }
+  .bottom-nav button{
+    flex-direction:row;justify-content:flex-start;align-items:center;
+    padding:12px 14px;border-radius:10px;font-size:14px;font-weight:700;
+    gap:12px;flex:none;width:100%;color:var(--gray-600);
+  }
+  .bottom-nav button svg{width:20px;height:20px;flex-shrink:0;}
+  .bottom-nav button.active{background:var(--orange-l);color:var(--orange);}
+  .bottom-nav button:hover:not(.active){background:var(--gray-50);}
+  /* Top bar — fixed above content area, NOT a flex sibling */
+  .top-bar{position:fixed!important;top:0;left:var(--sidebar);right:0;width:auto!important;
+    margin:0!important;padding:14px 36px;z-index:150;border-radius:0;
+    border-bottom:1px solid rgba(255,255,255,.15);box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  .top-bar h1{font-size:20px;}
+  /* Screen — fills full width minus sidebar, with top padding below fixed top-bar */
+  .screen{margin-left:var(--sidebar);flex:1;height:100vh;overflow-y:auto;
+    padding:74px 36px 40px;background:#f0f2f5;}
+  /* Cards */
+  .card{border-radius:14px;padding:20px 24px;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+  .card-title{font-size:16px;}
+  /* Job grid */
+  .jobs-list{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .jobs-list .job-card{margin-bottom:0;}
+  /* Stat grid */
+  .stat-grid{grid-template-columns:repeat(4,1fr);}
+  /* Fab */
+  .fab{position:fixed;bottom:32px;right:40px;transform:none;left:auto;width:56px;height:56px;font-size:28px;}
+  /* Inputs */
+  .field input,.field select,.field textarea{font-size:15px;padding:12px 14px;}
+  .field label{font-size:14px;margin-bottom:6px;}
+  .btn{font-size:15px;padding:11px 20px;}
+  .btn-sm{font-size:13px;padding:7px 14px;}
+  /* Modal */
+  .modal-overlay{align-items:center;}
+  .modal-box{border-radius:16px;margin:24px;max-height:85vh;max-width:560px;}
+  .modal-box.center{margin:24px auto;}
+  /* Section head */
+  .section-head h2{font-size:18px;}
+  /* Badge */
+  .badge{font-size:12px;padding:4px 10px;}
+  /* Toast */
+  .toast-container{top:80px;max-width:480px;}
+  /* Hide logo from top bar on desktop (sidebar has brand) */
+  .top-bar .mundom-logo-wrap{display:none;}
+}
+
+/* ── CARDS ── */
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;}
+.card-title{font-size:15px;font-weight:800;color:var(--gray-800);margin-bottom:8px;}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--orange);color:#fff;}
+.btn-primary:hover:not(:disabled){background:var(--orange-d);}
+.btn-secondary{background:var(--gray-200);color:var(--gray-700);}
+.btn-secondary:hover:not(:disabled){background:var(--gray-300);}
+.btn-success{background:var(--green);color:#fff;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-ghost{background:none;color:var(--orange);border:1.5px solid var(--orange);}
+.btn-sm{padding:6px 12px;font-size:13px;}
+.btn-full{width:100%;}
+.btn-icon{width:36px;height:36px;padding:0;border-radius:50%;}
+/* ── INPUTS ── */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:5px;}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:14px;background:#fff;color:var(--gray-900);transition:border-color .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--orange);}
+.field textarea{resize:vertical;min-height:80px;}
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+.badge-orange{background:var(--orange-l);color:var(--orange-d);}
+.badge-green{background:var(--green-l);color:var(--green);}
+.badge-red{background:var(--red-l);color:var(--red);}
+.badge-blue{background:var(--blue-l);color:var(--blue);}
+.badge-yellow{background:var(--yellow-l);color:var(--yellow);}
+.badge-purple{background:var(--purple-l);color:var(--purple);}
+.badge-gray{background:var(--gray-200);color:var(--gray-600);}
+/* ── AVATAR ── */
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+/* ── CHECK ITEM ── */
+.check-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;cursor:pointer;border:1.5px solid var(--gray-200);transition:all .15s;}
+.check-item.checked{background:var(--green-l);border-color:var(--green);}
+.check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);flex-shrink:0;}
+.check-item span{font-size:14px;flex:1;}
+.check-item.checked span{color:var(--green);text-decoration:line-through;}
+/* ── SECTION HEAD ── */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.section-head h2{font-size:16px;font-weight:800;color:var(--gray-800);}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal-box{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:20px;}
+.modal-box.center{border-radius:16px;margin:16px;max-height:85vh;}
+.modal-handle{width:40px;height:4px;background:var(--gray-300);border-radius:2px;margin:0 auto 16px;}
+/* ── LOADING ── */
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;background:#fff;}
+.spinner{width:44px;height:44px;border:4px solid var(--gray-200);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ── TOAST ── */
+.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none;width:calc(100% - 32px);max-width:440px;}
+.toast{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:700;color:#fff;box-shadow:var(--shadow-lg);animation:slideIn .3s ease;text-align:center;}
+.toast-success{background:var(--green);}
+.toast-error{background:var(--red);}
+.toast-info{background:var(--orange);}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+/* ── CALENDAR ── */
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px;}
+.cal-day{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:8px;cursor:pointer;transition:all .15s;min-height:48px;}
+.cal-day:hover{background:var(--gray-100);}
+.cal-day.active{background:var(--orange);color:#fff;}
+.cal-day .day-name{font-size:10px;font-weight:700;text-transform:uppercase;opacity:.7;}
+.cal-day .day-num{font-size:18px;font-weight:800;}
+.cal-day .day-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);}
+.cal-day.active .day-dot{background:#fff;}
+/* ── CALENDAR RESPONSIVE ── */
+.cal-upcoming{width:280px;flex-shrink:0;}
+.cal-month-panel{width:320px;flex-shrink:0;}
+@media(max-width:768px){
+  .cal-upcoming{display:none!important;}
+  .cal-month-panel{width:100%!important;}
+  .cal-year-grid{grid-template-columns:repeat(2,1fr)!important;}
+}
+/* ── JOB CARD ── */
+.job-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:10px;border-left:4px solid var(--orange);cursor:pointer;transition:all .15s;}
+.job-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
+.job-card .jc-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;}
+.job-card .jc-title{font-size:15px;font-weight:800;color:var(--gray-900);flex:1;}
+.job-card .jc-client{font-size:13px;color:var(--gray-500);margin-top:2px;}
+.job-card .jc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.job-card.status-en_curso{border-left-color:var(--blue);}
+.job-card.status-completado{border-left-color:var(--green);}
+.job-card.status-cancelado{border-left-color:var(--gray-400);}
+/* ── SIG CANVAS ── */
+.sig-canvas-wrap{border:2px dashed var(--gray-300);border-radius:8px;background:var(--gray-50);overflow:hidden;touch-action:none;}
+.sig-canvas-wrap canvas{display:block;width:100%;cursor:crosshair;}
+/* ── STEPS ── */
+.steps{display:flex;align-items:center;margin-bottom:20px;}
+.step{display:flex;align-items:center;gap:6px;flex:1;}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;transition:all .2s;}
+.step-circle.done{background:var(--green);color:#fff;}
+.step-circle.active{background:var(--orange);color:#fff;}
+.step-circle.pending{background:var(--gray-200);color:var(--gray-500);}
+.step-line{flex:1;height:2px;background:var(--gray-200);}
+.step-line.done{background:var(--green);}
+/* ── USER CHIP ── */
+.user-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--gray-100);border-radius:20px;font-size:13px;font-weight:700;}
+/* ── METRICS ── */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-box{background:var(--gray-50);border-radius:12px;padding:16px;text-align:center;}
+.stat-box .stat-val{font-size:32px;font-weight:900;color:var(--orange);}
+.stat-box .stat-lbl{font-size:12px;color:var(--gray-500);margin-top:3px;font-weight:700;}
+/* ── MAP ── */
+#ops-map{height:250px;border-radius:8px;overflow:hidden;z-index:1;}
+/* ── PHOTO GRID ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.photo-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;}
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--gray-200);margin:16px 0;}
+/* ── ALERT ── */
+.alert{padding:12px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;font-weight:600;}
+.alert-info{background:var(--blue-l);color:var(--blue);}
+.alert-warning{background:var(--yellow-l);color:var(--yellow);}
+.alert-success{background:var(--green-l);color:var(--green);}
+/* ── EMPTY STATE ── */
+.empty-state{text-align:center;padding:48px 20px;color:var(--gray-400);}
+.empty-state .es-icon{font-size:56px;margin-bottom:16px;}
+.empty-state p{font-size:15px;font-weight:600;}
+/* ── PROGRESS BAR ── */
+.progress-bar{height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden;}
+.progress-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s;}
+/* ── TAB BAR ── */
+.tab-bar{display:flex;background:var(--gray-100);border-radius:10px;padding:4px;margin-bottom:16px;overflow-x:auto;gap:2px;}
+.tab-btn{flex:1;padding:8px;border:none;background:none;border-radius:8px;font-size:13px;font-weight:700;color:var(--gray-500);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.tab-btn.active{background:#fff;color:var(--gray-900);box-shadow:var(--shadow);}
+/* ── CHIPS ── */
+.chips-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;-ms-overflow-style:none;scrollbar-width:none;}
+.chips-row::-webkit-scrollbar{display:none;}
+.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--gray-300);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;background:#fff;transition:all .15s;}
+.chip:hover{border-color:var(--orange);}
+.chip.active{background:var(--orange);border-color:var(--orange);color:#fff;}
+/* ── INPUT ROW ── */
+.input-row{display:flex;gap:8px;align-items:flex-end;}
+.input-row .field{flex:1;margin:0;}
+/* ── TOGGLE ── */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.toggle-wrap span{font-size:14px;font-weight:700;color:var(--gray-700);}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--gray-300);border-radius:24px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:var(--orange);}
+.toggle input:checked+.toggle-slider:before{transform:translateX(20px);}
+/* ── FAB ── */
+.fab{position:fixed;bottom:90px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--orange);color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(244,121,32,.5);display:flex;align-items:center;justify-content:center;z-index:99;transition:all .2s;}
+.fab:hover{background:var(--orange-d);transform:scale(1.08);}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.MUNDOM_LOGO="data:image/png;base64,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";
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyCZAQJHCyczt1udzGb5GU_DrlCpz9nTCAs",
+  authDomain:"mundo-m-reparto.firebaseapp.com",
+  databaseURL:"https://mundo-m-reparto-default-rtdb.firebaseio.com",
+  projectId:"mundo-m-reparto",
+  storageBucket:"mundo-m-reparto.firebasestorage.app",
+  messagingSenderId:"565764110020",
+  appId:"1:565764110020:web:1c48fc48735880925bfb91"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db=firebase.database();
+const auth=firebase.auth();
+const storage=firebase.storage();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+</script>
+<script>
+// PWA manifest
+const pwaManifest={
+  name:"Mundo M Operaciones",
+  short_name:"Operaciones",
+  display:"standalone",
+  start_url:".",
+  background_color:"#ffffff",
+  theme_color:"#F47920",
+  icons:[{src:window.MUNDOM_LOGO,sizes:"512x512",type:"image/png"}]
+};
+const mblob=new Blob([JSON.stringify(pwaManifest)],{type:"application/json"});
+const murl=URL.createObjectURL(mblob);
+const mlink=document.createElement("link");
+mlink.rel="manifest";mlink.href=murl;
+document.head.appendChild(mlink);
+// Apple touch icon
+const alink=document.createElement("link");
+alink.rel="apple-touch-icon";alink.href=window.MUNDOM_LOGO;
+document.head.appendChild(alink);
+</script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const ROLES = { admin:'admin', coordinadora:'coordinadora', jefa:'jefa', operario:'operario', comercial:'comercial' };
+const ROLE_LABELS = { admin:'Admin', coordinadora:'Supervisora', jefa:'Jefa de obra', operario:'Operario', comercial:'Comercial' };
+const ROLE_COLORS = { admin:'badge-purple', coordinadora:'badge-orange', jefa:'badge-blue', operario:'badge-gray', comercial:'badge-green' };
+
+const JOB_STATUS = {
+  pendiente:'pendiente', en_curso:'en_curso',
+  completado:'completado', cancelado:'cancelado'
+};
+const STATUS_LABELS = {
+  pendiente:'Pendiente', en_curso:'En curso',
+  completado:'Completado', cancelado:'Cancelado'
+};
+const STATUS_COLORS = {
+  pendiente:'badge-yellow', en_curso:'badge-blue',
+  completado:'badge-green', cancelado:'badge-gray'
+};
+const STATUS_DOT_COLORS = {
+  pendiente:'var(--yellow)', en_curso:'var(--blue)',
+  completado:'var(--green)', cancelado:'var(--gray-400)'
+};
+
+const JOB_TYPES = ['racks','gondolas','entrepiso','lockers','mobiliario','mantenimiento'];
+const JOB_TYPE_LABELS = {
+  racks:'Racks', gondolas:'Góndolas', entrepiso:'Entrepiso',
+  lockers:'Lockers', mobiliario:'Mobiliario', mantenimiento:'Mantenimiento'
+};
+const JOB_TYPE_ICONS = {
+  racks:'🗄️', gondolas:'🛒', entrepiso:'🏗️',
+  lockers:'🔐', mobiliario:'🪑', mantenimiento:'🔧'
+};
+
+// ─── JOB TEMPLATES ────────────────────────────────────────────────────────────
+const DEFAULT_TEMPLATES = {
+  racks: {
+    name:'Racks portapallet', type:'racks',
+    tasks:[
+      {title:'Verificar dimensiones y layout según plano'},
+      {title:'Marcar posiciones de columnas en el piso'},
+      {title:'Instalar placas base y anclajes'},
+      {title:'Armar columnas laterales'},
+      {title:'Colocar vigas y travesaños'},
+      {title:'Nivelar y alinear toda la estructura'},
+      {title:'Instalar protectores de columnas y guardapasillos'},
+      {title:'Revisión final con cliente y prueba de carga'}
+    ],
+    materials:[
+      {name:'Columnas rack', qty:0, unit:'u'},
+      {name:'Vigas de carga', qty:0, unit:'u'},
+      {name:'Placas base', qty:0, unit:'u'},
+      {name:'Tornillos de anclaje', qty:0, unit:'u'},
+      {name:'Protectores de columna', qty:0, unit:'u'},
+      {name:'Travesaños diagonales', qty:0, unit:'u'}
+    ],
+    tools:[
+      {name:'Taladro percutor'},
+      {name:'Nivel de burbuja 1.2m'},
+      {name:'Maza de goma'},
+      {name:'Llave torque'},
+      {name:'Cinta métrica 5m'},
+      {name:'Escuadra'},
+      {name:'Plomada'},
+      {name:'Palanca de montaje'}
+    ],
+    safetyEquipment:[
+      {name:'Casco de seguridad'},
+      {name:'Guantes de trabajo'},
+      {name:'Calzado de seguridad (punta acero)'},
+      {name:'Gafas de protección'},
+      {name:'Chaleco reflectante'}
+    ]
+  },
+  gondolas: {
+    name:'Góndolas y exhibidores', type:'gondolas',
+    tasks:[
+      {title:'Verificar medidas del local y recepción de materiales'},
+      {title:'Marcar posiciones de góndolas según layout'},
+      {title:'Armar bases y estructuras centrales'},
+      {title:'Instalar estantes y gancheras'},
+      {title:'Nivelar y alinear lineales'},
+      {title:'Instalar iluminación (si aplica)'},
+      {title:'Colocar zócalos y tapas terminales'},
+      {title:'Revisión final y limpieza de área'}
+    ],
+    materials:[
+      {name:'Módulos de góndola', qty:0, unit:'u'},
+      {name:'Estantes', qty:0, unit:'u'},
+      {name:'Gancheras', qty:0, unit:'u'},
+      {name:'Bases y zócalos', qty:0, unit:'u'},
+      {name:'Tapas laterales', qty:0, unit:'u'},
+      {name:'Tornillos y fijaciones', qty:0, unit:'bolsa'}
+    ],
+    tools:[
+      {name:'Taladro'},
+      {name:'Nivel de burbuja'},
+      {name:'Destornillador eléctrico'},
+      {name:'Cinta métrica'},
+      {name:'Cortafrío (si aplica)'}
+    ],
+    safetyEquipment:[
+      {name:'Guantes de trabajo'},
+      {name:'Calzado de seguridad'},
+      {name:'Gafas de protección'}
+    ]
+  },
+  entrepiso: {
+    name:'Entrepiso metálico', type:'entrepiso',
+    tasks:[
+      {title:'Verificar cálculo estructural y permisos'},
+      {title:'Marcar y taladrar puntos de anclaje en piso y pared'},
+      {title:'Instalar columnas y vigas principales'},
+      {title:'Montar estructura secundaria (vigas de piso)'},
+      {title:'Colocar chapa de piso (tramada o lisa)'},
+      {title:'Instalar escalera de acceso'},
+      {title:'Colocar barandas y pasamanos'},
+      {title:'Instalar puertas de acceso (si aplica)'},
+      {title:'Revisión de seguridad estructural con cliente'}
+    ],
+    materials:[
+      {name:'Columnas HEA/IPE', qty:0, unit:'u'},
+      {name:'Vigas principales', qty:0, unit:'u'},
+      {name:'Vigas secundarias', qty:0, unit:'u'},
+      {name:'Chapa de piso tramada', qty:0, unit:'m2'},
+      {name:'Escalera metálica', qty:0, unit:'u'},
+      {name:'Barandas y pasamanos', qty:0, unit:'ml'},
+      {name:'Placas base y anclajes', qty:0, unit:'u'},
+      {name:'Bulones y tornillos estructurales', qty:0, unit:'bolsa'}
+    ],
+    tools:[
+      {name:'Taladro percutor pesado'},
+      {name:'Soldadora MIG (si aplica)'},
+      {name:'Amoladora angular'},
+      {name:'Nivel de burbuja 2m'},
+      {name:'Plomada'},
+      {name:'Cinta métrica 10m'},
+      {name:'Llave torque calibrada'},
+      {name:'Andamio o escalera de seguridad'}
+    ],
+    safetyEquipment:[
+      {name:'Casco de seguridad'},
+      {name:'Arnés de seguridad'},
+      {name:'Guantes de soldadura'},
+      {name:'Careta de soldadura'},
+      {name:'Calzado de seguridad (punta acero)'},
+      {name:'Gafas de protección'},
+      {name:'Chaleco reflectante'}
+    ]
+  },
+  lockers: {
+    name:'Lockers y guardarropas', type:'lockers',
+    tasks:[
+      {title:'Verificar posición y anclaje según plano'},
+      {title:'Armar módulos de lockers según instrucciones'},
+      {title:'Instalar soportes de pared (si aplica)'},
+      {title:'Anclar lockers al piso o pared'},
+      {title:'Instalar cerraduras y llaves'},
+      {title:'Verificar apertura y cierre de todas las puertas'},
+      {title:'Colocar etiquetas de numeración'},
+      {title:'Entrega con funcionamiento verificado'}
+    ],
+    materials:[
+      {name:'Módulos de locker', qty:0, unit:'u'},
+      {name:'Cerraduras', qty:0, unit:'u'},
+      {name:'Tornillos de anclaje', qty:0, unit:'u'},
+      {name:'Soportes de pared', qty:0, unit:'u'}
+    ],
+    tools:[
+      {name:'Taladro'},
+      {name:'Nivel de burbuja'},
+      {name:'Destornillador'},
+      {name:'Llave allen set'},
+      {name:'Cinta métrica'}
+    ],
+    safetyEquipment:[
+      {name:'Guantes de trabajo'},
+      {name:'Calzado de seguridad'}
+    ]
+  },
+  mobiliario: {
+    name:'Mobiliario comercial', type:'mobiliario',
+    tasks:[
+      {title:'Recepción y verificación de materiales'},
+      {title:'Desembalar y revisar piezas'},
+      {title:'Armar según plano e instrucciones'},
+      {title:'Fijar o anclar piezas donde corresponda'},
+      {title:'Verificar estética y alineación'},
+      {title:'Limpieza y entrega al cliente'}
+    ],
+    materials:[
+      {name:'Muebles/módulos', qty:0, unit:'u'},
+      {name:'Herrajes y bisagras', qty:0, unit:'bolsa'},
+      {name:'Tornillos varios', qty:0, unit:'bolsa'}
+    ],
+    tools:[
+      {name:'Destornillador eléctrico'},
+      {name:'Nivel de burbuja'},
+      {name:'Taladro'},
+      {name:'Llave allen set'},
+      {name:'Cinta métrica'}
+    ],
+    safetyEquipment:[
+      {name:'Guantes de trabajo'},
+      {name:'Calzado de seguridad'}
+    ]
+  },
+  mantenimiento: {
+    name:'Mantenimiento y reparación', type:'mantenimiento',
+    tasks:[
+      {title:'Diagnóstico y relevamiento de estado actual'},
+      {title:'Identificar piezas a reparar/reemplazar'},
+      {title:'Ejecutar reparaciones o refuerzos'},
+      {title:'Verificar soldaduras y anclajes'},
+      {title:'Pintura o tratamiento anticorrosivo (si aplica)'},
+      {title:'Prueba de carga o funcionamiento post-reparación'},
+      {title:'Informe fotográfico antes/después'}
+    ],
+    materials:[
+      {name:'Piezas de repuesto (a definir)', qty:0, unit:'u'},
+      {name:'Pintura anticorrosiva', qty:0, unit:'lata'},
+      {name:'Electrodos de soldadura', qty:0, unit:'u'}
+    ],
+    tools:[
+      {name:'Soldadora'},
+      {name:'Amoladora'},
+      {name:'Taladro'},
+      {name:'Herramientas varias'},
+      {name:'Cámara/teléfono para fotos'}
+    ],
+    safetyEquipment:[
+      {name:'Casco de seguridad'},
+      {name:'Guantes de trabajo'},
+      {name:'Careta de soldadura (si aplica)'},
+      {name:'Calzado de seguridad'},
+      {name:'Gafas de protección'}
+    ]
+  }
+};
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+
+function fmtDate(ts){
+  if(!ts) return '';
+  const d=new Date(ts);
+  return d.toLocaleDateString('es-UY',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+function fmtTime(ts){
+  if(!ts) return '';
+  return new Date(ts).toLocaleTimeString('es-UY',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDuration(ms){
+  if(!ms||ms<0) return '-';
+  const m=Math.round(ms/60000);
+  if(m<60) return m+'min';
+  return Math.floor(m/60)+'h '+( m%60 ? (m%60)+'min' : '');
+}
+function dateKey(ts){ // "YYYY-MM-DD"
+  const d=new Date(ts||Date.now());
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function getWeekDays(refDate){
+  const d=new Date(refDate);
+  const day=d.getDay(); // 0=sun
+  const mon=new Date(d); mon.setDate(d.getDate()-(day===0?6:day-1));
+  return Array.from({length:7},(_,i)=>{ const x=new Date(mon); x.setDate(mon.getDate()+i); return x; });
+}
+function initials(name=''){
+  return name.split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2)||'?';
+}
+function canEdit(user){
+  return user&&(user.rol===ROLES.admin||user.rol===ROLES.coordinadora||user.rol===ROLES.comercial);
+}
+function canCreate(user){
+  return user&&(user.rol===ROLES.admin||user.rol===ROLES.coordinadora||user.rol===ROLES.comercial);
+}
+function canViewAll(user){
+  return user&&(user.rol===ROLES.admin||user.rol===ROLES.coordinadora||user.rol===ROLES.jefa||user.rol===ROLES.comercial);
+}
+function whatsappUrl(phone,msg){
+  const clean=phone.replace(/\D/g,'');
+  return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function useToast(){
+  const [toasts,setToasts]=useState([]);
+  const show=useCallback((msg,type='info',dur=2800)=>{
+    const id=uid();
+    setToasts(t=>[...t,{id,msg,type}]);
+    setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),dur);
+  },[]);
+  const ToastContainer=()=>(
+    <div className="toast-container">
+      {toasts.map(t=>(
+        <div key={t.id} className={`toast toast-${t.type}`}>{t.msg}</div>
+      ))}
+    </div>
+  );
+  return {show, ToastContainer};
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function Modal({open, onClose, title, children, center=false}){
+  if(!open) return null;
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className={`modal-box${center?' center':''}`}>
+        {!center && <div className="modal-handle"/>}
+        {title && (
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+            <h2 style={{fontSize:17,fontWeight:700}}>{title}</h2>
+            <button onClick={onClose} style={{background:'none',border:'none',fontSize:22,cursor:'pointer',color:'var(--gray-500)'}}>✕</button>
+          </div>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── CONFIRM DIALOG ───────────────────────────────────────────────────────────
+function useConfirm(){
+  const [state,setState]=useState(null);
+  const confirm=(msg,onYes,onNo)=>setState({msg,onYes,onNo});
+  const Dialog=()=>{
+    if(!state) return null;
+    return (
+      <div className="modal-overlay">
+        <div className="modal-box center" style={{maxWidth:340,margin:'auto 16px'}}>
+          <p style={{fontSize:15,marginBottom:20,lineHeight:1.5}}>{state.msg}</p>
+          <div style={{display:'flex',gap:10}}>
+            <button className="btn btn-secondary btn-full" onClick={()=>{state.onNo&&state.onNo();setState(null);}}>Cancelar</button>
+            <button className="btn btn-danger btn-full" onClick={()=>{state.onYes();setState(null);}}>Confirmar</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  return {confirm, Dialog};
+}
+
+// ─── LOGO ─────────────────────────────────────────────────────────────────────
+function MundoLogo({size=44}){
+  return <img src={window.MUNDOM_LOGO} width={size} height={size} style={{borderRadius:'50%',display:'block',flexShrink:0}} alt="Mundo M"/>;
+}
+
+// ─── FIELD ────────────────────────────────────────────────────────────────────
+function Field({label, required, children, hint}){
+  return (
+    <div className="field">
+      {label && <label>{label}{required && <span style={{color:'var(--red)'}}> *</span>}</label>}
+      {children}
+      {hint && <p style={{fontSize:11,color:'var(--gray-400)',marginTop:3}}>{hint}</p>}
+    </div>
+  );
+}
+
+// ─── BADGE ────────────────────────────────────────────────────────────────────
+function Badge({type='badge-gray',children}){
+  return <span className={`badge ${type}`}>{children}</span>;
+}
+function StatusBadge({status}){
+  return <Badge type={STATUS_COLORS[status]||'badge-gray'}>{STATUS_LABELS[status]||status}</Badge>;
+}
+function RoleBadge({rol}){
+  return <Badge type={ROLE_COLORS[rol]||'badge-gray'}>{ROLE_LABELS[rol]||rol}</Badge>;
+}
+
+// ─── AVATAR ───────────────────────────────────────────────────────────────────
+function Avatar({name='',size=36,color}){
+  const bg=color||'var(--orange)';
+  return (
+    <div className="avatar" style={{width:size,height:size,fontSize:size*0.38,background:bg}}>
+      {initials(name)}
+    </div>
+  );
+}
+
+// ─── STEP BAR ─────────────────────────────────────────────────────────────────
+function StepBar({steps, current}){
+  return (
+    <div className="steps">
+      {steps.map((s,i)=>(
+        <React.Fragment key={i}>
+          <div className="step">
+            <div className={`step-circle ${i<current?'done':i===current?'active':'pending'}`}>
+              {i<current ? '✓' : i+1}
+            </div>
+            <span style={{fontSize:11,color:i===current?'var(--gray-800)':'var(--gray-400)',fontWeight:i===current?700:500,flex:1,lineHeight:1.2}}>{s}</span>
+          </div>
+          {i<steps.length-1 && <div className={`step-line ${i<current?'done':''}`}/>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function ProgressBar({value, max, color}){
+  const pct=max?Math.min(100,Math.round(value/max*100)):0;
+  return (
+    <div className="progress-bar">
+      <div className="progress-bar-fill" style={{width:pct+'%',background:color||'var(--green)'}}/>
+    </div>
+  );
+}
+
+// ─── SIGNATURE CANVAS ─────────────────────────────────────────────────────────
+function SignatureCanvas({onSave, height=160, label='Firmar aquí'}){
+  const canvasRef=useRef(null);
+  const drawing=useRef(false);
+  const lastPt=useRef(null);
+
+  function getPos(e,canvas){
+    const r=canvas.getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    return {x:(src.clientX-r.left)*(canvas.width/r.width), y:(src.clientY-r.top)*(canvas.height/r.height)};
+  }
+  function start(e){
+    e.preventDefault();
+    drawing.current=true;
+    const pt=getPos(e,canvasRef.current);
+    lastPt.current=pt;
+    const ctx=canvasRef.current.getContext('2d');
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,1,0,Math.PI*2); ctx.fill();
+  }
+  function move(e){
+    e.preventDefault();
+    if(!drawing.current) return;
+    const canvas=canvasRef.current;
+    const ctx=canvas.getContext('2d');
+    const pt=getPos(e,canvas);
+    ctx.beginPath();
+    ctx.moveTo(lastPt.current.x,lastPt.current.y);
+    ctx.lineTo(pt.x,pt.y);
+    ctx.strokeStyle='#111'; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.stroke();
+    lastPt.current=pt;
+  }
+  function end(){ drawing.current=false; }
+
+  function clear(){
+    const c=canvasRef.current;
+    c.getContext('2d').clearRect(0,0,c.width,c.height);
+  }
+  function save(){
+    const c=canvasRef.current;
+    const ctx=c.getContext('2d');
+    const data=ctx.getImageData(0,0,c.width,c.height).data;
+    const hasContent=Array.from(data).some((v,i)=>i%4===3&&v>0);
+    if(!hasContent){alert('Por favor firma antes de guardar.');return;}
+    onSave(c.toDataURL('image/png'));
+  }
+
+  return (
+    <div>
+      <p style={{fontSize:12,color:'var(--gray-500)',marginBottom:6}}>{label}</p>
+      <div className="sig-canvas-wrap">
+        <canvas ref={canvasRef} width={400} height={height}
+          onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
+          onTouchStart={start} onTouchMove={move} onTouchEnd={end}
+        />
+      </div>
+      <div style={{display:'flex',gap:8,marginTop:8}}>
+        <button className="btn btn-secondary btn-sm" onClick={clear}>Borrar</button>
+        <button className="btn btn-success btn-sm" onClick={save}>Guardar firma</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── PHOTO CAPTURE ────────────────────────────────────────────────────────────
+function PhotoCapture({photos=[], onAdd, onRemove, maxPhotos=6}){
+  const inputRef=useRef(null);
+  function handleFile(e){
+    const files=Array.from(e.target.files);
+    files.forEach(file=>{
+      const reader=new FileReader();
+      reader.onload=ev=>onAdd({id:uid(),data:ev.target.result,ts:Date.now()});
+      reader.readAsDataURL(file);
+    });
+    e.target.value='';
+  }
+  return (
+    <div>
+      <div className="photo-grid" style={{marginBottom:10}}>
+        {photos.map((p,i)=>(
+          <div key={p.id||i} style={{position:'relative'}}>
+            <img src={p.data} alt="" style={{width:'100%',aspectRatio:'1',objectFit:'cover',borderRadius:6}}/>
+            {onRemove && (
+              <button onClick={()=>onRemove(p.id||i)}
+                style={{position:'absolute',top:2,right:2,background:'rgba(220,38,38,.85)',color:'#fff',border:'none',borderRadius:'50%',width:22,height:22,fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                ✕
+              </button>
+            )}
+          </div>
+        ))}
+        {photos.length < maxPhotos && onAdd && (
+          <button onClick={()=>inputRef.current?.click()}
+            style={{aspectRatio:'1',border:'2px dashed var(--gray-300)',borderRadius:6,background:'var(--gray-50)',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:4,color:'var(--gray-400)'}}>
+            <span style={{fontSize:24}}>📷</span>
+            <span style={{fontSize:10}}>Foto</span>
+          </button>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*" capture="environment" multiple style={{display:'none'}} onChange={handleFile}/>
+    </div>
+  );
+}
+
+// ─── FILE FIELD (upload PDF or paste link) ────────────────────────────────────
+/* ── ADDRESS MAP PREVIEW ── */
+function AddressMapPreview({address, autoShow}){
+  const mapRef=React.useRef(null);
+  const mapInstance=React.useRef(null);
+  const markerRef=React.useRef(null);
+  const [coords,setCoords]=React.useState(null);
+  const [loading,setLoading]=React.useState(false);
+  const [error,setError]=React.useState('');
+  const [visible,setVisible]=React.useState(false);
+  const debounceRef=React.useRef(null);
+  const lastAddr=React.useRef('');
+
+  async function geocode(addr){
+    if(!addr||addr.length<6) return;
+    setLoading(true); setError(''); setCoords(null); setVisible(false);
+    try{
+      const q=encodeURIComponent(addr+', Uruguay');
+      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=uy`,{headers:{'Accept-Language':'es','User-Agent':'MundoM-Operaciones/1.0'}});
+      const d=await r.json();
+      if(!d.length){setError('No se encontró. Añadí ciudad o calle más completa.');setLoading(false);return;}
+      const lat=parseFloat(d[0].lat), lng=parseFloat(d[0].lon);
+      setCoords({lat,lng,display:d[0].display_name});
+      setVisible(true);
+    }catch(e){setError('Error de conexión al buscar mapa.');}
+    setLoading(false);
+  }
+
+  // Auto-geocode when address changes (debounced 900ms)
+  React.useEffect(()=>{
+    if(!address) return;
+    if(address===lastAddr.current) return;
+    lastAddr.current=address;
+    clearTimeout(debounceRef.current);
+    if(address.length>=8){
+      debounceRef.current=setTimeout(()=>geocode(address), 900);
+    }
+    return()=>clearTimeout(debounceRef.current);
+  },[address]);
+
+  // Render map when coords arrive
+  React.useEffect(()=>{
+    if(!visible||!coords||!mapRef.current) return;
+    if(!window.L) return;
+    setTimeout(()=>{
+      if(!mapRef.current) return;
+      if(mapInstance.current){mapInstance.current.remove();mapInstance.current=null;}
+      mapInstance.current=window.L.map(mapRef.current,{zoomControl:true,attributionControl:false}).setView([coords.lat,coords.lng],16);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
+      markerRef.current=window.L.marker([coords.lat,coords.lng]).addTo(mapInstance.current);
+      markerRef.current.bindPopup(address).openPopup();
+    },120);
+    return()=>{if(mapInstance.current){mapInstance.current.remove();mapInstance.current=null;}};
+  },[visible,coords]);
+
+  if(!address) return null;
+  return (
+    <div style={{marginTop:6}}>
+      {loading && <p style={{fontSize:12,color:'var(--gray-500)',display:'flex',alignItems:'center',gap:4}}>
+        <span style={{display:'inline-block',width:12,height:12,border:'2px solid var(--gray-300)',borderTopColor:'var(--orange)',borderRadius:'50%',animation:'spin .7s linear infinite'}}></span> Buscando dirección...
+      </p>}
+      {error && <p style={{fontSize:12,color:'var(--red)',marginBottom:4}}>⚠️ {error}</p>}
+      {coords && (
+        <div>
+          <p style={{fontSize:11,color:'var(--green)',marginBottom:4,fontWeight:700}}>✓ {coords.display.split(',').slice(0,3).join(', ')}</p>
+          <div style={{display:'flex',gap:6,marginBottom:6}}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={()=>{setCoords(null);setVisible(false);}} style={{fontSize:11}}>✕ Cerrar mapa</button>
+            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm" style={{fontSize:11,background:'#4285F4',color:'#fff',textDecoration:'none'}}>🗺️ Google Maps</a>
+          </div>
+          {visible && <div ref={mapRef} style={{height:200,borderRadius:10,overflow:'hidden',border:'1.5px solid var(--gray-200)',marginBottom:4}}/>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FileLinkField({label, icon, value, onChange, placeholder}){
+  const [uploading,setUploading]=useState(false);
+  const [mode,setMode]=useState('link'); // 'link' | 'upload'
+  const inputRef=React.useRef();
+
+  async function handleUpload(e){
+    const file=e.target.files[0]; if(!file) return;
+    setUploading(true);
+    try{
+      const path=`operaciones_files/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
+      const snap=await storage.ref(path).put(file);
+      const url=await snap.ref.getDownloadURL();
+      onChange(url);
+    }catch(err){
+      alert('Error al subir. Usá el link de Google Drive en su lugar.');
+    }
+    setUploading(false);
+    if(e.target) e.target.value='';
+  }
+
+  return (
+    <div style={{marginBottom:12}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+        <label style={{fontSize:13,fontWeight:700,color:'var(--gray-700)'}}>{icon} {label}</label>
+        {!value && (
+          <div style={{display:'flex',gap:4}}>
+            <button onClick={()=>setMode('link')} style={{fontSize:11,padding:'2px 8px',borderRadius:6,border:'1px solid var(--gray-300)',background:mode==='link'?'var(--orange)':'#fff',color:mode==='link'?'#fff':'var(--gray-600)',cursor:'pointer',fontWeight:600}}>Link</button>
+            <button onClick={()=>setMode('upload')} style={{fontSize:11,padding:'2px 8px',borderRadius:6,border:'1px solid var(--gray-300)',background:mode==='upload'?'var(--orange)':'#fff',color:mode==='upload'?'#fff':'var(--gray-600)',cursor:'pointer',fontWeight:600}}>📤 PDF</button>
+          </div>
+        )}
+      </div>
+      {value ? (
+        <div style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--blue-l)',borderRadius:8,border:'1.5px solid var(--blue)'}}>
+          <a href={value} target="_blank" rel="noopener noreferrer" style={{flex:1,fontSize:13,fontWeight:600,color:'var(--blue)',textDecoration:'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            🔗 Ver {label}
+          </a>
+          <button onClick={()=>onChange('')} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer',fontSize:16,flexShrink:0}}>✕</button>
+        </div>
+      ) : mode==='upload' ? (
+        <div>
+          <button onClick={()=>inputRef.current?.click()} disabled={uploading}
+            style={{width:'100%',padding:'10px 12px',border:'1.5px dashed var(--orange)',borderRadius:8,background:'var(--orange-l)',cursor:'pointer',fontSize:13,color:'var(--orange-d)',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+            {uploading?'⏳ Subiendo PDF...':'📄 Subir PDF desde la computadora'}
+          </button>
+          <input ref={inputRef} type="file" accept="application/pdf,image/*" onChange={handleUpload} style={{display:'none'}}/>
+          <p style={{fontSize:11,color:'var(--gray-400)',marginTop:3}}>O cambiá a "Link" para pegar un link de Google Drive</p>
+        </div>
+      ) : (
+        <input type="url" value={value} onChange={e=>onChange(e.target.value)}
+          placeholder={placeholder||'Pegá el link de Google Drive...'}
+          style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14,background:'#fff'}}/>
+      )}
+    </div>
+  );
+}
+// ─── GPS CAPTURE ──────────────────────────────────────────────────────────────
+function GpsCapture({label, value, onCapture}){
+  const [loading,setLoading]=useState(false);
+  const [err,setErr]=useState(null);
+
+  function capture(){
+    if(!navigator.geolocation){setErr('GPS no disponible'); return;}
+    setLoading(true); setErr(null);
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        setLoading(false);
+        onCapture({lat:pos.coords.latitude, lng:pos.coords.longitude, acc:Math.round(pos.coords.accuracy), ts:Date.now()});
+      },
+      e=>{setLoading(false); setErr('No se pudo obtener ubicación');},
+      {enableHighAccuracy:true, timeout:15000, maximumAge:0}
+    );
+  }
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:value?'var(--green-l)':'var(--gray-50)',borderRadius:8,border:`1.5px solid ${value?'var(--green)':'var(--gray-300)'}`}}>
+      <span style={{fontSize:22}}>{value?'📍':'🗺️'}</span>
+      <div style={{flex:1}}>
+        <p style={{fontSize:13,fontWeight:700,color:value?'var(--green)':'var(--gray-700)'}}>{label}</p>
+        {value ? (
+          <p style={{fontSize:11,color:'var(--gray-500)'}}>
+            {value.lat.toFixed(5)}, {value.lng.toFixed(5)} · ±{value.acc}m · {fmtTime(value.ts)}
+          </p>
+        ) : (
+          <p style={{fontSize:11,color:'var(--gray-400)'}}>Sin capturar</p>
+        )}
+        {err && <p style={{fontSize:11,color:'var(--red)'}}>{err}</p>}
+      </div>
+      <button className="btn btn-sm" style={{background:value?'var(--green)':'var(--orange)',color:'#fff'}}
+        onClick={capture} disabled={loading}>
+        {loading ? '...' : value ? 'Recapturar' : 'Capturar'}
+      </button>
+    </div>
+  );
+}
+
+// ─── AUTH ─────────────────────────────────────────────────────────────────────
+// Google sign-in button — defined OUTSIDE any component to avoid re-creation
+function GoogleSignInBtn({onClick, loading}){
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      style={{
+        width:'100%',padding:'12px',
+        border:'1.5px solid var(--gray-300)',borderRadius:8,
+        background:loading?'var(--gray-100)':'#fff',
+        fontSize:15,fontWeight:600,cursor:loading?'not-allowed':'pointer',
+        display:'flex',alignItems:'center',justifyContent:'center',gap:10,
+        color:'var(--gray-700)'
+      }}>
+      {loading
+        ? <><div style={{width:20,height:20,border:'3px solid var(--gray-200)',borderTopColor:'var(--orange)',borderRadius:'50%',animation:'spin .7s linear infinite'}}/><span>Abriendo Google...</span></>
+        : <><svg width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg><span>Continuar con Google</span></>
+      }
+    </button>
+  );
+}
+
+function LoginScreen({noUsers}){
+  const [tab,setTab]=useState('login');
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [regNombre,setRegNombre]=useState('');
+  const [regEmail,setRegEmail]=useState('');
+  const [regPass,setRegPass]=useState('');
+  const [regPass2,setRegPass2]=useState('');
+  const [loading,setLoading]=useState(false);
+  const [googleLoading,setGoogleLoading]=useState(false);
+  const [err,setErr]=useState('');
+
+  async function login(e){
+    e.preventDefault();
+    setLoading(true); setErr('');
+    try{
+      await auth.signInWithEmailAndPassword(email.trim(), pass);
+    } catch(ex){
+      setErr('Email o contraseña incorrectos');
+      setLoading(false);
+    }
+  }
+
+  async function register(e){
+    e.preventDefault(); setErr('');
+    if(!regNombre.trim()){setErr('Ingresá tu nombre completo'); return;}
+    if(regPass.length<6){setErr('Contraseña mínimo 6 caracteres'); return;}
+    if(regPass!==regPass2){setErr('Las contraseñas no coinciden'); return;}
+    setLoading(true);
+    try{
+      const cred=await auth.createUserWithEmailAndPassword(regEmail.trim(), regPass);
+      await db.ref('usuarios/'+cred.user.uid).set({
+        nombre:regNombre.trim(), email:regEmail.trim(),
+        rol:'operario', activo:true, createdAt:Date.now()
+      });
+    } catch(ex){
+      const msg = ex.code==='auth/email-already-in-use' ? 'Este email ya está registrado' :
+                  ex.code==='auth/invalid-email' ? 'Email inválido' : 'Error al crear cuenta';
+      setErr(msg); setLoading(false);
+    }
+  }
+
+  function handleGoogle(){
+    setErr(''); setGoogleLoading(true);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    auth.signInWithPopup(provider).catch(e=>{
+      if(e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request'){
+        setErr('Error al iniciar sesión con Google. Intentá nuevamente.');
+      }
+      setGoogleLoading(false);
+    });
+  }
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100%',padding:24,background:'#fff'}}>
+      <MundoLogo size={80}/>
+      <h1 style={{fontSize:22,fontWeight:800,marginTop:16,color:'var(--gray-900)'}}>Mundo M</h1>
+      <p style={{fontSize:14,color:'var(--gray-500)',marginBottom:24}}>Operaciones</p>
+
+      <div style={{width:'100%',maxWidth:360}}>
+
+        <GoogleSignInBtn onClick={handleGoogle} loading={googleLoading}/>
+
+        <div style={{display:'flex',alignItems:'center',gap:10,margin:'18px 0'}}>
+          <div style={{flex:1,height:1,background:'var(--gray-200)'}}/>
+          <span style={{fontSize:12,color:'var(--gray-400)',whiteSpace:'nowrap'}}>o continuá con email</span>
+          <div style={{flex:1,height:1,background:'var(--gray-200)'}}/>
+        </div>
+
+        <div className="tab-bar" style={{marginBottom:18}}>
+          <button className={`tab-btn${tab==='login'?' active':''}`} onClick={()=>{setTab('login');setErr('');}}>Ingresar</button>
+          <button className={`tab-btn${tab==='register'?' active':''}`} onClick={()=>{setTab('register');setErr('');}}>Crear cuenta</button>
+        </div>
+
+        {err && <div style={{background:'var(--red-l)',color:'var(--red)',padding:'10px 12px',borderRadius:8,fontSize:13,fontWeight:600,marginBottom:12}}>{err}</div>}
+
+        {tab==='login' && (
+          <form onSubmit={login}>
+            <Field label="Email" required>
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="tu@email.com" required/>
+            </Field>
+            <Field label="Contraseña" required>
+              <input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••••" required/>
+            </Field>
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{fontSize:15,padding:13}}>
+              {loading ? 'Ingresando...' : 'Ingresar'}
+            </button>
+          </form>
+        )}
+
+        {tab==='register' && (
+          <form onSubmit={register}>
+            <div className="alert alert-info" style={{marginBottom:14,fontSize:13}}>
+              Tu cuenta quedará como <strong>Operario</strong>. El admin puede cambiar el rol.
+            </div>
+            <Field label="Nombre completo" required>
+              <input value={regNombre} onChange={e=>setRegNombre(e.target.value)} placeholder="Juan Pérez" required/>
+            </Field>
+            <Field label="Email" required>
+              <input type="email" value={regEmail} onChange={e=>setRegEmail(e.target.value)} placeholder="tu@email.com" required/>
+            </Field>
+            <Field label="Contraseña" required hint="Mínimo 6 caracteres">
+              <input type="password" value={regPass} onChange={e=>setRegPass(e.target.value)} placeholder="••••••••" required/>
+            </Field>
+            <Field label="Repetir contraseña" required>
+              <input type="password" value={regPass2} onChange={e=>setRegPass2(e.target.value)} placeholder="••••••••" required/>
+            </Field>
+            <button type="submit" className="btn btn-primary btn-full" disabled={loading} style={{fontSize:15,padding:13}}>
+              {loading ? 'Creando cuenta...' : 'Crear mi cuenta'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+// ─── MAIN APP WRAPPER ─────────────────────────────────────────────────────────
+function App(){
+  const [authReady,setAuthReady]=useState(false);
+  const [currentUser,setCurrentUser]=useState(null);
+  const [noUsers,setNoUsers]=useState(false);
+
+  useEffect(()=>{
+    const timeout=setTimeout(()=>setAuthReady(true),8000);
+    const unsub=auth.onAuthStateChanged(async fbUser=>{
+      clearTimeout(timeout);
+      try{
+        if(fbUser){
+          let snap=await db.ref('usuarios/'+fbUser.uid).once('value');
+          // No profile yet? Auto-create (covers Google sign-in and any new auth method)
+          if(!snap.val()){
+            const nombre=fbUser.displayName||fbUser.email.split('@')[0];
+            await db.ref('usuarios/'+fbUser.uid).set({
+              nombre, email:fbUser.email,
+              rol:'operario', activo:true,
+              createdAt:Date.now()
+            });
+            snap=await db.ref('usuarios/'+fbUser.uid).once('value');
+          }
+          const profile=snap.val();
+          if(profile&&profile.activo){
+            setCurrentUser({uid:fbUser.uid,...profile});
+            setNoUsers(false);
+          } else {
+            await auth.signOut();
+            setCurrentUser(null);
+            const allSnap=await db.ref('usuarios').once('value');
+            setNoUsers(!allSnap.val());
+          }
+        } else {
+          setCurrentUser(null);
+          try{
+            const allSnap=await db.ref('usuarios').once('value');
+            setNoUsers(!allSnap.val());
+          } catch(e){ setNoUsers(false); }
+        }
+      } catch(e){ console.error('Auth init error:',e); }
+      setAuthReady(true);
+    });
+    return()=>{ clearTimeout(timeout); unsub(); };
+  },[]);
+
+  if(!authReady){
+    return (
+      <div className="loading-screen">
+        <MundoLogo size={72}/>
+        <div className="spinner"/>
+        <p style={{fontSize:14,color:'var(--gray-500)'}}>Cargando Operaciones...</p>
+      </div>
+    );
+  }
+  if(!currentUser) return <LoginScreen noUsers={noUsers}/>;
+  return <MainApp user={currentUser} onUserUpdate={setCurrentUser}/>;
+}
+
+// ─── NAVIGATION ICONS ─────────────────────────────────────────────────────────
+const NavIcon = {
+  calendar: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  list: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>,
+  chart: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
+  admin: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+  user: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
+};
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function MainApp({user, onUserUpdate}){
+  const [tab,setTab]=useState('trabajos');
+  const [screen,setScreen]=useState(null); // {name, params}
+  const {show:showToast, ToastContainer}=useToast();
+  const {confirm, Dialog:ConfirmDialog}=useConfirm();
+
+  // Shared context passed to all screens
+  const ctx={user, showToast, confirm, navigate:(name,params)=>setScreen({name,params}), goBack:()=>setScreen(null)};
+
+  // ── Sub-screens (overlay on top of tab) ──────────────────────────────────
+  if(screen){
+    const SC = {
+      jobDetail: ()=><JobDetailScreen {...ctx} {...screen.params}/>,
+      jobCreate: ()=><JobCreateScreen {...ctx} {...screen.params}/>,
+      jobExecution: ()=><JobExecutionScreen {...ctx} {...screen.params}/>,
+      conformity: ()=><ConformityScreen {...ctx} {...screen.params}/>,
+      userCreate: ()=><UserCreateScreen {...ctx} {...screen.params}/>,
+      templateEdit: ()=><TemplateEditScreen {...ctx} {...screen.params}/>,
+    };
+    const Comp = SC[screen.name];
+    return Comp ? (
+      <div className="app-shell">
+        <ToastContainer/>
+        <ConfirmDialog/>
+        <Comp/>
+      </div>
+    ) : null;
+  }
+
+  // ── Bottom nav tabs ───────────────────────────────────────────────────────
+  const tabs = [
+    ...(canViewAll(user) ? [{id:'calendario', label:'Calendario', Icon:NavIcon.calendar}] : []),
+    {id:'trabajos', label:'Trabajos', Icon:NavIcon.list},
+    ...(canViewAll(user) ? [{id:'metricas', label:'Métricas', Icon:NavIcon.chart}] : []),
+    ...(user.rol===ROLES.admin ? [{id:'admin', label:'Admin', Icon:NavIcon.admin}] : []),
+    {id:'perfil', label:'Yo', Icon:NavIcon.user},
+  ];
+
+  const TabScreen = {
+    calendario: ()=><CalendarScreen {...ctx}/>,
+    trabajos: ()=><JobListScreen {...ctx}/>,
+    metricas: ()=><MetricsDashboardScreen {...ctx}/>,
+    admin: ()=><AdminScreen {...ctx}/>,
+    perfil: ()=><ProfileScreen {...ctx}/>,
+  };
+  const ActiveTab = TabScreen[tab] || TabScreen.trabajos;
+
+  return (
+    <div className="app-shell">
+      <ToastContainer/>
+      <ConfirmDialog/>
+      <ActiveTab/>
+      {/* FAB for comercial/coordinadora/admin on trabajos tab */}
+      {(tab==='trabajos'||tab==='calendario') && canCreate(user) && (
+        <button className="fab" title="Nuevo trabajo"
+          onClick={()=>setScreen({name:'jobCreate',params:{}})}>＋</button>
+      )}
+      <nav className="bottom-nav">
+        {tabs.map(t=>(
+          <button key={t.id} className={tab===t.id?'active':''} onClick={()=>setTab(t.id)}>
+            <t.Icon/>
+            {t.label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+// ─── CALENDAR SCREEN ──────────────────────────────────────────────────────────
+function CalendarScreen({user, navigate, showToast}){
+  const [jobs,setJobs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [selectedDate,setSelectedDate]=useState(new Date());
+  const [refDate,setRefDate]=useState(new Date()); // reference for week/month/year navigation
+  const [view,setView]=useState('mes'); // 'semana' | 'mes' | 'anio'
+
+  useEffect(()=>{
+    const ref=db.ref('operaciones_jobs');
+    const h=ref.on('value',snap=>{
+      const data=snap.val()||{};
+      const arr=Object.entries(data).map(([id,v])=>({id,...v}))
+        .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      setJobs(arr);
+      setLoading(false);
+    });
+    return()=>ref.off('value',h);
+  },[]);
+
+  const jobsByDate=useMemo(()=>{
+    const m={};
+    jobs.forEach(j=>{ if(j.date){ if(!m[j.date]) m[j.date]=[]; m[j.date].push(j); } });
+    return m;
+  },[jobs]);
+
+  const selKey=dateKey(selectedDate);
+  const dayJobs=jobsByDate[selKey]||[];
+  const DAY_NAMES=['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+  const MONTH_NAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  function getMonthDays(year, month){
+    const first=new Date(year,month,1);
+    const startDow=(first.getDay()+6)%7; // Monday=0
+    const daysInMonth=new Date(year,month+1,0).getDate();
+    const cells=[];
+    for(let i=0;i<startDow;i++) cells.push(null);
+    for(let d=1;d<=daysInMonth;d++) cells.push(new Date(year,month,d));
+    while(cells.length%7!==0) cells.push(null);
+    return cells;
+  }
+
+  // Navigation
+  function prev(){
+    const d=new Date(refDate);
+    if(view==='semana') d.setDate(d.getDate()-7);
+    else if(view==='mes') d.setMonth(d.getMonth()-1);
+    else d.setFullYear(d.getFullYear()-1);
+    setRefDate(d);
+  }
+  function next(){
+    const d=new Date(refDate);
+    if(view==='semana') d.setDate(d.getDate()+7);
+    else if(view==='mes') d.setMonth(d.getMonth()+1);
+    else d.setFullYear(d.getFullYear()+1);
+    setRefDate(d);
+  }
+  function goToday(){ setRefDate(new Date()); setSelectedDate(new Date()); }
+
+  // Nav label
+  function navLabel(){
+    if(view==='semana'){
+      const wk=getWeekDays(refDate);
+      return `${wk[0].toLocaleDateString('es-UY',{day:'numeric',month:'short'})} – ${wk[6].toLocaleDateString('es-UY',{day:'numeric',month:'short',year:'numeric'})}`;
+    }
+    if(view==='mes') return `${MONTH_NAMES[refDate.getMonth()]} ${refDate.getFullYear()}`;
+    return `${refDate.getFullYear()}`;
+  }
+
+  // Status dot color
+  function dotColor(jobs){
+    if(!jobs||!jobs.length) return null;
+    if(jobs.some(j=>j.status==='en_curso')) return 'var(--blue)';
+    if(jobs.some(j=>j.status==='pendiente')) return 'var(--orange)';
+    return 'var(--green)';
+  }
+
+  // ── SEMANA VIEW ──
+  function WeekView(){
+    const weekDays=getWeekDays(refDate);
+    return (
+      <div style={{display:'flex',gap:20,flex:1,minHeight:0}}>
+        {/* Week strip + day jobs */}
+        <div style={{flex:1,minWidth:0}}>
+          <div className="cal-week" style={{marginBottom:16}}>
+            {weekDays.map((d,i)=>{
+              const k=dateKey(d);
+              const today=dateKey(new Date())===k;
+              const sel=selKey===k;
+              const jj=jobsByDate[k]||[];
+              return (
+                <div key={i} className={`cal-day${sel?' active':''}`} onClick={()=>setSelectedDate(new Date(d))}>
+                  <span className="day-name" style={today&&!sel?{color:'var(--orange)'}:{}}>{DAY_NAMES[i]}</span>
+                  <span className="day-num" style={today&&!sel?{color:'var(--orange)'}:{}}>{d.getDate()}</span>
+                  {jj.length>0 && <div className="day-dot" style={{background:dotColor(jj)}}/>}
+                </div>
+              );
+            })}
+          </div>
+          <DayPanel/>
+        </div>
+        {/* Upcoming panel */}
+        <UpcomingPanel/>
+      </div>
+    );
+  }
+
+  // ── MES VIEW ──
+  function MonthView(){
+    const cells=getMonthDays(refDate.getFullYear(), refDate.getMonth());
+    const todayKey=dateKey(new Date());
+    return (
+      <div style={{display:'flex',gap:20,flex:1,minHeight:0}}>
+        <div style={{flex:1,minWidth:0}}>
+          {/* Day headers */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:2,marginBottom:4}}>
+            {DAY_NAMES.map(d=><div key={d} style={{textAlign:'center',fontSize:12,fontWeight:700,color:'var(--gray-500)',padding:'4px 0'}}>{d}</div>)}
+          </div>
+          {/* Cells */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4}}>
+            {cells.map((d,i)=>{
+              if(!d) return <div key={i}/>;
+              const k=dateKey(d);
+              const jj=jobsByDate[k]||[];
+              const today=k===todayKey;
+              const sel=k===selKey;
+              return (
+                <div key={i} onClick={()=>setSelectedDate(new Date(d))}
+                  style={{
+                    padding:'8px 4px',borderRadius:10,cursor:'pointer',minHeight:64,
+                    background:sel?'var(--orange)':today?'var(--orange-l)':'var(--gray-50)',
+                    border:sel?'none':today?'1.5px solid var(--orange)':'1.5px solid transparent',
+                    transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',gap:2
+                  }}>
+                  <span style={{fontSize:14,fontWeight:700,color:sel?'#fff':today?'var(--orange)':'var(--gray-700)'}}>{d.getDate()}</span>
+                  {jj.slice(0,3).map((j,ii)=>(
+                    <div key={ii} style={{
+                      width:'80%',height:4,borderRadius:3,
+                      background:sel?'rgba(255,255,255,.6)':STATUS_DOT_COLORS[j.status]||'var(--gray-400)'
+                    }}/>
+                  ))}
+                  {jj.length>3 && <span style={{fontSize:9,color:sel?'rgba(255,255,255,.8)':'var(--gray-400)',fontWeight:700}}>+{jj.length-3}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Day panel */}
+        <div className="cal-month-panel" style={{width:320,flexShrink:0}}>
+          <DayPanel/>
+        </div>
+      </div>
+    );
+  }
+
+  // ── AÑO VIEW ──
+  function YearView(){
+    const yr=refDate.getFullYear();
+    return (
+      <div className="cal-year-grid" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,flex:1}}>
+        {MONTH_NAMES.map((mn,mi)=>{
+          const cells=getMonthDays(yr,mi);
+          const todayKey=dateKey(new Date());
+          return (
+            <div key={mi} className="card" style={{padding:'12px'}}>
+              <div style={{fontSize:13,fontWeight:800,color:'var(--gray-800)',marginBottom:8,textAlign:'center'}}>{mn}</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:1,marginBottom:2}}>
+                {DAY_NAMES.map(d=><div key={d} style={{fontSize:8,textAlign:'center',color:'var(--gray-400)',fontWeight:700}}>{d[0]}</div>)}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:1}}>
+                {cells.map((d,i)=>{
+                  if(!d) return <div key={i}/>;
+                  const k=dateKey(d);
+                  const jj=jobsByDate[k]||[];
+                  const today=k===todayKey;
+                  const sel=k===selKey;
+                  return (
+                    <div key={i} onClick={()=>{setSelectedDate(new Date(d));setRefDate(new Date(d));setView('mes');}}
+                      title={jj.length?`${jj.length} trabajo(s)`:d.toLocaleDateString('es-UY')}
+                      style={{
+                        width:'100%',aspectRatio:'1',display:'flex',alignItems:'center',justifyContent:'center',
+                        fontSize:9,fontWeight:700,borderRadius:3,cursor:jj.length||today?'pointer':'default',
+                        background:sel?'var(--orange)':today?'var(--orange-l)':jj.length?'var(--blue-l)':'transparent',
+                        color:sel?'#fff':today?'var(--orange)':jj.length?'var(--blue)':'var(--gray-500)',
+                      }}>
+                      {d.getDate()}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── DAY PANEL (shared by week and month views) ──
+  function DayPanel(){
+    return (
+      <div>
+        <div className="section-head" style={{marginBottom:12}}>
+          <h2 style={{textTransform:'capitalize'}}>{selectedDate.toLocaleDateString('es-UY',{weekday:'long',day:'numeric',month:'long'})}</h2>
+          <span className={`badge badge-${dayJobs.length?'orange':'gray'}`}>{dayJobs.length} trabajo{dayJobs.length!==1?'s':''}</span>
+        </div>
+        {loading && <div className="spinner" style={{margin:'20px auto'}}/>}
+        {!loading && dayJobs.length===0 && (
+          <div className="empty-state" style={{padding:'20px 0'}}>
+            <div className="es-icon">📅</div>
+            <p>Sin trabajos para este día</p>
+          </div>
+        )}
+        {dayJobs.map(j=><JobCard key={j.id} job={j} onClick={()=>navigate('jobDetail',{jobId:j.id})}/>)}
+      </div>
+    );
+  }
+
+  // ── UPCOMING PANEL ──
+  function UpcomingPanel(){
+    const todayKey=dateKey(new Date());
+    const upcoming=jobs
+      .filter(j=>j.date&&j.date>=todayKey&&j.status!=='completado')
+      .slice(0,8);
+    return (
+      <div className="cal-upcoming" style={{width:280,flexShrink:0}}>
+        <h3 style={{fontSize:14,fontWeight:800,color:'var(--gray-700)',marginBottom:12}}>📋 Próximos trabajos</h3>
+        {upcoming.length===0 && <p style={{fontSize:13,color:'var(--gray-400)'}}>Sin trabajos pendientes</p>}
+        {upcoming.map(j=>(
+          <div key={j.id} onClick={()=>{setSelectedDate(new Date(j.date+'T12:00:00'));navigate('jobDetail',{jobId:j.id});}}
+            style={{
+              padding:'10px 12px',borderRadius:10,background:'#fff',marginBottom:8,cursor:'pointer',
+              borderLeft:`3px solid ${STATUS_DOT_COLORS[j.status]||'var(--gray-300)'}`,
+              boxShadow:'0 1px 4px rgba(0,0,0,.07)'
+            }}>
+            <div style={{fontSize:13,fontWeight:700,color:'var(--gray-800)'}}>{j.title}</div>
+            <div style={{fontSize:11,color:'var(--gray-500)',marginTop:2}}>{j.date} · {j.client}</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-shell">
+      <div className="top-bar">
+        <MundoLogo size={32} style={{flexShrink:0}}/>
+        <h1 style={{flex:1}}>Calendario</h1>
+        <div style={{display:'flex',gap:6,alignItems:'center'}}>
+          {['semana','mes','anio'].map(v=>(
+            <button key={v} onClick={()=>setView(v)}
+              style={{padding:'5px 12px',borderRadius:6,border:'none',cursor:'pointer',fontSize:13,fontWeight:700,
+                background:view===v?'rgba(255,255,255,.95)':' rgba(255,255,255,.2)',
+                color:view===v?'var(--orange)':'#fff'}}>
+              {v==='semana'?'Semana':v==='mes'?'Mes':'Año'}
+            </button>
+          ))}
+        </div>
+        <button onClick={goToday} className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none',marginLeft:8}}>Hoy</button>
+      </div>
+      <div className="screen" style={{display:'flex',flexDirection:'column'}}>
+        {/* Navigation row */}
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:16}}>
+          <button onClick={prev} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--gray-600)',lineHeight:1,padding:'4px 8px'}}>‹</button>
+          <span style={{flex:1,textAlign:'center',fontSize:14,fontWeight:700,color:'var(--gray-700)'}}>{navLabel()}</span>
+          <button onClick={next} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'var(--gray-600)',lineHeight:1,padding:'4px 8px'}}>›</button>
+        </div>
+        {/* View */}
+        {view==='semana' && <WeekView/>}
+        {view==='mes' && <MonthView/>}
+        {view==='anio' && <YearView/>}
+      </div>
+    </div>
+  );
+}
+
+// ─── JOB LIST SCREEN ──────────────────────────────────────────────────────────
+function JobListScreen({user, navigate, showToast}){
+  const [jobs,setJobs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [filter,setFilter]=useState('todos'); // todos | pendiente | en_curso | completado
+  const [search,setSearch]=useState('');
+
+  useEffect(()=>{
+    const ref=db.ref('operaciones_jobs');
+    const h=ref.on('value',snap=>{
+      const data=snap.val()||{};
+      let arr=Object.entries(data).map(([id,v])=>({id,...v}));
+      // If operario, only show jobs they're assigned to
+      if(user.rol===ROLES.operario){
+        arr=arr.filter(j=>Array.isArray(j.team)&&j.team.includes(user.uid));
+      }
+      arr.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      setJobs(arr);
+      setLoading(false);
+    });
+    return()=>ref.off('value',h);
+  },[user.uid, user.rol]);
+
+  const filtered=useMemo(()=>{
+    let r=jobs;
+    if(filter!=='todos') r=r.filter(j=>j.status===filter);
+    if(search) r=r.filter(j=>(j.title+' '+(j.client||'')).toLowerCase().includes(search.toLowerCase()));
+    return r;
+  },[jobs,filter,search]);
+
+  const statusFilters=[
+    {id:'todos',label:'Todos'},
+    {id:'pendiente',label:'Pendientes'},
+    {id:'en_curso',label:'En curso'},
+    {id:'completado',label:'Completados'},
+  ];
+
+  return (
+    <div className="app-shell">
+      <div className="top-bar">
+        <MundoLogo size={32}/>
+        <h1>Trabajos</h1>
+      </div>
+      <div className="screen">
+        {/* Search */}
+        <div style={{marginBottom:10,position:'relative'}}>
+          <input type="search" placeholder="🔍 Buscar trabajo o cliente..." value={search} onChange={e=>setSearch(e.target.value)}
+            style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14}}/>
+        </div>
+        {/* Filter chips */}
+        <div className="chips-row">
+          {statusFilters.map(f=>(
+            <div key={f.id} className={`chip${filter===f.id?' active':''}`} onClick={()=>setFilter(f.id)}>{f.label}</div>
+          ))}
+        </div>
+        {loading && <div style={{textAlign:'center',padding:40}}><div className="spinner" style={{margin:'auto'}}/></div>}
+        {!loading && filtered.length===0 && (
+          <div className="empty-state">
+            <div className="es-icon">🔨</div>
+            <p>Sin trabajos{filter!=='todos'?' en este estado':''}</p>
+          </div>
+        )}
+        {filtered.map(j=><JobCard key={j.id} job={j} onClick={()=>navigate('jobDetail',{jobId:j.id})}/>)}
+      </div>
+    </div>
+  );
+}
+
+// ─── JOB CARD ─────────────────────────────────────────────────────────────────
+function JobCard({job, onClick}){
+  return (
+    <div className={`job-card status-${job.status||'pendiente'}`} onClick={onClick}>
+      <div className="jc-head">
+        <span style={{fontSize:22}}>{JOB_TYPE_ICONS[job.type]||'🔨'}</span>
+        <div style={{flex:1}}>
+          <div className="jc-title">{job.title||'Sin título'}</div>
+          <div className="jc-client">{job.client||'Sin cliente'}</div>
+        </div>
+        <StatusBadge status={job.status||'pendiente'}/>
+      </div>
+      <div className="jc-meta">
+        {job.date && <Badge type="badge-gray">📅 {job.date}</Badge>}
+        {job.startTime && <Badge type="badge-gray">🕐 {job.startTime}</Badge>}
+        {job.type && <Badge type="badge-orange">{JOB_TYPE_LABELS[job.type]||job.type}</Badge>}
+        {Array.isArray(job.team) && <Badge type="badge-gray">👥 {job.team.length}</Badge>}
+      </div>
+      {(job.changeRequests||[]).some(cr=>cr.pendiente) && (
+        <div style={{marginTop:6,padding:'4px 8px',background:'var(--yellow-l)',borderRadius:6,fontSize:12,fontWeight:700,color:'var(--yellow)',display:'inline-flex',alignItems:'center',gap:4}}>
+          ⚠️ Cambio solicitado
+        </div>
+      )}
+      {job.blueprintUrl && (
+        <div style={{marginTop:4,fontSize:11,color:'var(--blue)',fontWeight:600}}>📎 Plano adjunto</div>
+      )}
+      {job.tasks && (()=>{
+        const done=(job.tasks||[]).filter(t=>t.completed).length;
+        const total=(job.tasks||[]).length;
+        if(!total) return null;
+        return (
+          <div style={{marginTop:8}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'var(--gray-500)',marginBottom:3}}>
+              <span>Tareas</span><span>{done}/{total}</span>
+            </div>
+            <ProgressBar value={done} max={total}/>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+// ─── CHANGE REQUEST BUTTON ────────────────────────────────────────────────────
+function ChangeRequestButton({jobId, user, job, showToast}){
+  const [open,setOpen]=useState(false);
+  const [tipo,setTipo]=useState('Cambio de diseño');
+  const [descripcion,setDescripcion]=useState('');
+  const [saving,setSaving]=useState(false);
+
+  const tipos=['Cambio de diseño','Cambio de medidas','Material faltante','Problema en sitio','Solicitud del cliente','Otro'];
+
+  async function enviar(){
+    if(!descripcion.trim()){showToast('Describí el cambio solicitado','error');return;}
+    setSaving(true);
+    const req={tipo,descripcion:descripcion.trim(),solicitadoPor:user.nombre,uid:user.uid,ts:Date.now(),pendiente:true};
+    const existing=(job.changeRequests||[]);
+    await db.ref('operaciones_jobs/'+jobId+'/changeRequests').set([...existing,req]);
+    showToast('Solicitud de cambio enviada al supervisor','success');
+    setDescripcion(''); setOpen(false); setSaving(false);
+  }
+
+  return (
+    <>
+      <button className="btn btn-full" style={{marginTop:8,background:'var(--yellow-l)',color:'var(--yellow)',border:'1.5px solid var(--yellow)',fontWeight:700}}
+        onClick={()=>setOpen(true)}>
+        ⚠️ Solicitar cambio al supervisor
+      </button>
+      {open && (
+        <div className="modal-overlay" onClick={()=>setOpen(false)}>
+          <div className="modal-box" onClick={e=>e.stopPropagation()}>
+            <div className="modal-handle"/>
+            <h2 style={{fontSize:16,fontWeight:800,marginBottom:16}}>Solicitar cambio</h2>
+            <div className="field">
+              <label style={{fontSize:13,fontWeight:700,color:'var(--gray-700)',display:'block',marginBottom:5}}>Tipo de cambio</label>
+              <select value={tipo} onChange={e=>setTipo(e.target.value)} style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14}}>
+                {tipos.map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label style={{fontSize:13,fontWeight:700,color:'var(--gray-700)',display:'block',marginBottom:5}}>Descripción del cambio</label>
+              <textarea value={descripcion} onChange={e=>setDescripcion(e.target.value)}
+                placeholder="Describí qué necesita cambiar y por qué..."
+                style={{width:'100%',padding:'10px 12px',border:'1.5px solid var(--gray-300)',borderRadius:8,fontSize:14,minHeight:100,resize:'vertical'}}/>
+            </div>
+            <div style={{display:'flex',gap:8}}>
+              <button className="btn btn-secondary btn-full" onClick={()=>setOpen(false)}>Cancelar</button>
+              <button className="btn btn-primary btn-full" onClick={enviar} disabled={saving}>
+                {saving?'Enviando...':'📤 Enviar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── JOB DETAIL SCREEN ────────────────────────────────────────────────────────
+function JobDetailScreen({user, jobId, navigate, goBack, showToast, confirm}){
+  const [job,setJob]=useState(null);
+  const [users,setUsers]=useState({});
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    const ref=db.ref('operaciones_jobs/'+jobId);
+    const h=ref.on('value',snap=>{ setJob(snap.val()?{id:jobId,...snap.val()}:null); setLoading(false); });
+    return()=>ref.off('value',h);
+  },[jobId]);
+
+  useEffect(()=>{
+    db.ref('usuarios').once('value').then(snap=>setUsers(snap.val()||{}));
+  },[]);
+
+  if(loading) return <LoadingShell title="Trabajo"/>;
+  if(!job) return <div className="app-shell"><TopBar title="No encontrado" onBack={goBack}/><div className="screen"><p>El trabajo no existe.</p></div></div>;
+
+  const isMyJob=Array.isArray(job.team)&&job.team.includes(user.uid);
+  const canExecute=isMyJob||user.rol===ROLES.jefa||user.rol===ROLES.admin;
+  const canEditJob=canEdit(user);
+
+  async function deleteJob(){
+    confirm('¿Eliminar este trabajo? Esta acción no se puede deshacer.',async()=>{
+      await db.ref('operaciones_jobs/'+jobId).remove();
+      showToast('Trabajo eliminado','success');
+      goBack();
+    });
+  }
+  async function changeStatus(newStatus){
+    await db.ref('operaciones_jobs/'+jobId+'/status').set(newStatus);
+    showToast('Estado actualizado','success');
+  }
+
+  const teamNames=(job.team||[]).map(uid=>users[uid]?.nombre||uid);
+
+  return (
+    <div className="app-shell">
+      <TopBar title={job.title||'Trabajo'} onBack={goBack} actions={
+        canEditJob ? (
+          <div style={{display:'flex',gap:8}}>
+            <button className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none'}}
+              onClick={()=>navigate('jobCreate',{editJobId:jobId})}>✏️</button>
+            <button className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none'}}
+              onClick={deleteJob}>🗑️</button>
+          </div>
+        ) : null
+      }/>
+      <div className="screen">
+        {/* Header */}
+        <div className="card" style={{borderLeft:`4px solid var(--orange)`}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:12,marginBottom:12}}>
+            <span style={{fontSize:36}}>{JOB_TYPE_ICONS[job.type]||'🔨'}</span>
+            <div style={{flex:1}}>
+              <h2 style={{fontSize:18,fontWeight:800}}>{job.title}</h2>
+              <p style={{fontSize:14,color:'var(--gray-600)',marginTop:2}}>{job.client}</p>
+            </div>
+            <StatusBadge status={job.status||'pendiente'}/>
+          </div>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+            {job.date && <Badge type="badge-gray">📅 {job.date}</Badge>}
+            {job.startTime && <Badge type="badge-gray">🕐 {job.startTime}</Badge>}
+            <Badge type="badge-orange">{JOB_TYPE_LABELS[job.type]||job.type}</Badge>
+          </div>
+        </div>
+
+        {/* Client info */}
+        {(job.clientAddress||job.clientPhone) && (
+          <div className="card">
+            <div className="card-title">Datos del cliente</div>
+            {job.clientAddress && (
+              <div style={{marginBottom:6}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                  <p style={{fontSize:13,flex:1}}>📍 {job.clientAddress}</p>
+                </div>
+                <AddressMapPreview address={job.clientAddress} autoShow={false}/>
+              </div>
+            )}
+            {job.clientPhone && (
+              <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                <p style={{fontSize:13}}>📱 {job.clientPhone}</p>
+                <a href={`tel:${job.clientPhone}`} className="btn btn-sm btn-secondary">Llamar</a>
+                <a href={whatsappUrl(job.clientPhone,`Hola! Te contactamos de Mundo M sobre el trabajo "${job.title}" programado para el ${job.date}.`)} target="_blank" className="btn btn-sm" style={{background:'#25d366',color:'#fff',textDecoration:'none'}}>WA</a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Team */}
+        {(job.team||[]).length > 0 && (
+          <div className="card">
+            <div className="card-title">Equipo ({(job.team||[]).length})</div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+              {(job.team||[]).map((uid,i)=>(
+                <div key={uid} className="user-chip">
+                  <Avatar name={users[uid]?.nombre||uid} size={24}/>
+                  {users[uid]?.nombre||uid}
+                  {job.teamLead===uid && <Badge type="badge-orange">Líder</Badge>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        {job.notes && (
+          <div className="card">
+            <div className="card-title">Notas</div>
+            <p style={{fontSize:14,color:'var(--gray-700)',lineHeight:1.6}}>{job.notes}</p>
+          </div>
+        )}
+
+        {/* Archivos */}
+        {(job.blueprintUrl||job.quoteUrl||job.extraUrl||job.sketchupLink||job.plansNote) && (
+          <div className="card">
+            <div className="card-title">📎 Archivos del trabajo</div>
+            {job.blueprintUrl && (
+              <a href={job.blueprintUrl} target="_blank" rel="noopener noreferrer" style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--blue-l)',borderRadius:8,marginBottom:8,textDecoration:'none',color:'var(--blue)'}}>
+                <span style={{fontSize:18}}>📐</span>
+                <span style={{flex:1,fontSize:13,fontWeight:700}}>Ver Plano</span>
+                <span style={{fontSize:12,color:'var(--blue)'}}>Google Drive →</span>
+              </a>
+            )}
+            {job.quoteUrl && (
+              <a href={job.quoteUrl} target="_blank" style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--green-l)',borderRadius:8,marginBottom:8,textDecoration:'none',color:'var(--green)'}}>
+                <span style={{fontSize:18}}>💰</span>
+                <span style={{flex:1,fontSize:13,fontWeight:700}}>Ver Cotización</span>
+                <span style={{fontSize:12,color:'var(--green)'}}>Google Drive →</span>
+              </a>
+            )}
+            {job.extraUrl && (
+              <a href={job.extraUrl} target="_blank" style={{display:'flex',alignItems:'center',gap:8,padding:'10px 12px',background:'var(--orange-l)',borderRadius:8,marginBottom:8,textDecoration:'none',color:'var(--orange-d)'}}>
+                <span style={{fontSize:18}}>📁</span>
+                <span style={{flex:1,fontSize:13,fontWeight:700}}>Archivo adicional</span>
+                <span style={{fontSize:12,color:'var(--orange-d)'}}>Google Drive →</span>
+              </a>
+            )}
+            {job.sketchupLink && <a href={job.sketchupLink} target="_blank" className="btn btn-sm btn-ghost" style={{textDecoration:'none',display:'inline-flex',marginBottom:6}}>🔗 Ver SketchUp / 3D</a>}
+            {job.plansNote && <p style={{fontSize:13,color:'var(--gray-600)',marginTop:6}}>{job.plansNote}</p>}
+          </div>
+        )}
+
+        {/* Cambios solicitados */}
+        {(job.changeRequests||[]).length > 0 && (
+          <div className="card" style={{borderLeft:'4px solid var(--yellow)'}}>
+            <div className="card-title">⚠️ Cambios solicitados</div>
+            {(job.changeRequests||[]).map((cr,i)=>(
+              <div key={i} style={{padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                <p style={{fontSize:13,fontWeight:700,color:'var(--yellow)'}}>{cr.tipo}</p>
+                <p style={{fontSize:13,marginTop:2}}>{cr.descripcion}</p>
+                <p style={{fontSize:11,color:'var(--gray-400)',marginTop:2}}>{fmtDate(cr.ts)} — {cr.solicitadoPor}</p>
+                {canEdit(user) && cr.pendiente && (
+                  <button className="btn btn-sm btn-success" style={{marginTop:6}} onClick={async()=>{
+                    const reqs=[...(job.changeRequests||[])];
+                    reqs[i]={...reqs[i],pendiente:false,resueltoPor:user.nombre,resueltoTs:Date.now()};
+                    await db.ref('operaciones_jobs/'+jobId+'/changeRequests').set(reqs);
+                    showToast('Cambio marcado como resuelto','success');
+                  }}>✓ Marcar resuelto</button>
+                )}
+                {!cr.pendiente && <Badge type="badge-green" style={{marginTop:4}}>Resuelto</Badge>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tasks */}
+        {(job.tasks||[]).length > 0 && (
+          <div className="card">
+            <div className="section-head">
+              <div className="card-title" style={{margin:0}}>Tareas</div>
+              <span style={{fontSize:13,color:'var(--gray-500)'}}>
+                {(job.tasks||[]).filter(t=>t.completed).length}/{(job.tasks||[]).length}
+              </span>
+            </div>
+            <ProgressBar value={(job.tasks||[]).filter(t=>t.completed).length} max={(job.tasks||[]).length}/>
+            <div style={{marginTop:10}}>
+              {(job.tasks||[]).map((t,i)=>(
+                <div key={t.id||i} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                  <span style={{fontSize:16}}>{t.completed?'✅':'⬜'}</span>
+                  <span style={{fontSize:13,flex:1,color:t.completed?'var(--gray-400)':'var(--gray-800)',textDecoration:t.completed?'line-through':'none'}}>{t.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Materials */}
+        {(job.materials||[]).length > 0 && (
+          <div className="card">
+            <div className="card-title">Materiales</div>
+            {(job.materials||[]).map((m,i)=>(
+              <div key={m.id||i} style={{display:'flex',alignItems:'center',gap:8,padding:'6px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                <span style={{fontSize:14}}>{m.checked?'✅':'📦'}</span>
+                <span style={{fontSize:13,flex:1}}>{m.name}</span>
+                {m.qty>0 && <Badge type="badge-gray">{m.qty} {m.unit||'u'}</Badge>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* GPS times */}
+        {(job.gpsStart||job.gpsEnd||job.startTs||job.endTs) && (
+          <div className="card">
+            <div className="card-title">Registro de tiempo</div>
+            {job.startTs && <p style={{fontSize:13,marginBottom:4}}>🟢 Inicio: {fmtDate(job.startTs)} {fmtTime(job.startTs)}</p>}
+            {job.endTs && <p style={{fontSize:13,marginBottom:4}}>🔴 Fin: {fmtDate(job.endTs)} {fmtTime(job.endTs)}</p>}
+            {job.startTs && job.endTs && <p style={{fontSize:13,color:'var(--gray-500)'}}>⏱ Duración: {fmtDuration(job.endTs-job.startTs)}</p>}
+          </div>
+        )}
+
+        {/* Photos */}
+        {(job.photos||[]).length > 0 && (
+          <div className="card">
+            <div className="card-title">Fotos ({(job.photos||[]).length})</div>
+            <div className="photo-grid">
+              {(job.photos||[]).map((p,i)=><img key={p.id||i} src={p.data} alt="" style={{width:'100%',aspectRatio:'1',objectFit:'cover',borderRadius:6}}/>)}
+            </div>
+          </div>
+        )}
+
+        {/* Conformity */}
+        {job.conformity && (
+          <div className="card" style={{borderLeft:'4px solid var(--green)'}}>
+            <div className="card-title">Conformidad del cliente</div>
+            <p style={{fontSize:13,color:'var(--gray-600)',marginBottom:8}}>{job.conformity.clientName}</p>
+            {job.conformity.observations && <p style={{fontSize:13}}>{job.conformity.observations}</p>}
+            {job.conformity.signature && <img src={job.conformity.signature} alt="firma" style={{maxWidth:'100%',border:'1px solid var(--gray-200)',borderRadius:6,marginTop:8}}/>}
+          </div>
+        )}
+
+        {/* Status actions */}
+        <div className="divider"/>
+        {canEditJob && job.status==='pendiente' && (
+          <button className="btn btn-primary btn-full" onClick={()=>changeStatus('en_curso')}>▶ Marcar como En curso (empieza la obra)</button>
+        )}
+        {canEditJob && job.status==='en_curso' && (
+          <button className="btn btn-success btn-full" onClick={()=>changeStatus('completado')}>✓ Marcar como Completado</button>
+        )}
+        {canEditJob && job.status!=='cancelado' && job.status!=='completado' && (
+          <button className="btn btn-secondary btn-full" style={{marginTop:8}} onClick={()=>changeStatus('cancelado')}>✕ Cancelar trabajo</button>
+        )}
+
+        {/* Execute button */}
+        {canExecute && (job.status==='pendiente'||job.status==='en_curso') && (
+          <button className="btn btn-primary btn-full" style={{marginTop:12,fontSize:16,padding:'14px'}}
+            onClick={()=>navigate('jobExecution',{jobId})}>
+            🛠️ Ir al panel de ejecución paso a paso
+          </button>
+        )}
+
+        {/* Notify team via WhatsApp */}
+        {canEdit(user) && (job.team||[]).length>0 && (
+          <button className="btn btn-full" style={{marginTop:8,background:'#25d366',color:'#fff',fontWeight:700}}
+            onClick={()=>{
+              const appUrl='https://mundom-apps.github.io/mundom-operaciones/';
+              const msg=`Hola! Se te asignó el trabajo *${job.title}* para *${job.client}* el día *${job.date}*${job.clientAddress?' en '+job.clientAddress:''}.\n\nIngresá a Mundo M Operaciones para ver los detalles:\n${appUrl}`;
+              window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+            }}>
+            📲 Notificar equipo por WhatsApp
+          </button>
+        )}
+
+        {/* Change request button - visible to execution team */}
+        {(isMyJob||user.rol===ROLES.jefa) && (job.status==='pendiente'||job.status==='en_curso') && (
+          <ChangeRequestButton jobId={jobId} user={user} job={job} showToast={showToast}/>
+        )}
+
+        {/* Conformity button */}
+        {(canExecute||canEditJob) && job.status==='en_curso' && (
+          <button className="btn btn-success btn-full" style={{marginTop:8}}
+            onClick={()=>navigate('conformity',{jobId})}>
+            ✍️ Registrar conformidad y cierre del cliente
+          </button>
+        )}
+
+        <div style={{height:20}}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── TOP BAR HELPER ───────────────────────────────────────────────────────────
+function TopBar({title, onBack, actions}){
+  return (
+    <div className="top-bar">
+      <button onClick={onBack} style={{background:'none',border:'none',color:'#fff',fontSize:22,cursor:'pointer',padding:'0 4px'}}>‹</button>
+      <h1 style={{flex:1}}>{title}</h1>
+      {actions}
+    </div>
+  );
+}
+function LoadingShell({title}){
+  return (
+    <div className="app-shell">
+      <div className="top-bar"><h1>{title}</h1></div>
+      <div className="screen" style={{display:'flex',justifyContent:'center',paddingTop:60}}>
+        <div className="spinner"/>
+      </div>
+    </div>
+  );
+}
+
+// ─── JOB CREATE / EDIT SCREEN ─────────────────────────────────────────────────
+function JobCreateScreen({user, editJobId, navigate, goBack, showToast}){
+  const [loading,setLoading]=useState(!!editJobId);
+  const [saving,setSaving]=useState(false);
+  const [allUsers,setAllUsers]=useState({});
+  const [templates,setTemplates]=useState({});
+
+  // Form state
+  const [title,setTitle]=useState('');
+  const [client,setClient]=useState('');
+  const [clientPhone,setClientPhone]=useState('');
+  const [clientAddress,setClientAddress]=useState('');
+  const [date,setDate]=useState(dateKey(Date.now()));
+  const [startTime,setStartTime]=useState('08:00');
+  const [type,setType]=useState('racks');
+  const [team,setTeam]=useState([]);
+  const [teamLead,setTeamLead]=useState('');
+  const [tasks,setTasks]=useState([]);
+  const [materials,setMaterials]=useState([]);
+  const [tools,setTools]=useState([]);
+  const [safetyEquipment,setSafetyEquipment]=useState([]);
+  const [sketchupLink,setSketchupLink]=useState('');
+  const [plansNote,setPlansNote]=useState('');
+  const [notes,setNotes]=useState('');
+  const [clientEmail,setClientEmail]=useState('');
+  const [productionDays,setProductionDays]=useState('');
+  // Archivos (Google Drive links)
+  const [blueprintUrl,setBlueprintUrl]=useState('');
+  const [quoteUrl,setQuoteUrl]=useState('');
+  const [extraUrl,setExtraUrl]=useState('');
+  const [activeSection,setActiveSection]=useState('general');
+
+  // Load users and templates
+  useEffect(()=>{
+    db.ref('usuarios').once('value').then(s=>setAllUsers(s.val()||{}));
+    db.ref('operaciones_templates').once('value').then(s=>{
+      const data=s.val()||{};
+      setTemplates({...DEFAULT_TEMPLATES,...data});
+    });
+  },[]);
+
+  // Load existing job for edit
+  useEffect(()=>{
+    if(!editJobId) return;
+    db.ref('operaciones_jobs/'+editJobId).once('value').then(s=>{
+      const j=s.val();
+      if(!j){ setLoading(false); return; }
+      setTitle(j.title||'');
+      setClient(j.client||'');
+      setClientPhone(j.clientPhone||'');
+      setClientAddress(j.clientAddress||'');
+      setDate(j.date||dateKey(Date.now()));
+      setStartTime(j.startTime||'08:00');
+      setType(j.type||'racks');
+      setTeam(j.team||[]);
+      setTeamLead(j.teamLead||'');
+      setTasks(j.tasks||[]);
+      setMaterials(j.materials||[]);
+      setTools(j.tools||[]);
+      setSafetyEquipment(j.safetyEquipment||[]);
+      setSketchupLink(j.sketchupLink||'');
+      setPlansNote(j.plansNote||'');
+      setNotes(j.notes||'');
+      setClientEmail(j.clientEmail||'');
+      setProductionDays(j.productionDays||'');
+      setBlueprintUrl(j.blueprintUrl||'');
+      setQuoteUrl(j.quoteUrl||'');
+      setExtraUrl(j.extraUrl||'');
+      setLoading(false);
+    });
+  },[editJobId]);
+
+  function applyTemplate(tplKey){
+    const tpl=templates[tplKey];
+    if(!tpl) return;
+    setType(tpl.type);
+    setTasks((tpl.tasks||[]).map(t=>({id:uid(),title:t.title,completed:false})));
+    setMaterials((tpl.materials||[]).map(m=>({id:uid(),...m,checked:false})));
+    setTools((tpl.tools||[]).map(t=>({id:uid(),name:t.name,checked:false})));
+    setSafetyEquipment((tpl.safetyEquipment||[]).map(s=>({id:uid(),name:s.name})));
+    showToast('Plantilla aplicada: '+tpl.name,'success');
+  }
+
+  // Task helpers
+  const [newTask,setNewTask]=useState('');
+  function addTask(){ if(!newTask.trim()) return; setTasks(t=>[...t,{id:uid(),title:newTask.trim(),completed:false}]); setNewTask(''); }
+  function removeTask(id){ setTasks(t=>t.filter(x=>x.id!==id)); }
+  function moveTask(id,dir){ setTasks(arr=>{ const i=arr.findIndex(x=>x.id===id); if(i<0) return arr; const a=[...arr]; const j=i+dir; if(j<0||j>=a.length) return a; [a[i],a[j]]=[ a[j],a[i] ]; return a; }); }
+
+  // Material helpers
+  const [newMatName,setNewMatName]=useState('');
+  const [newMatQty,setNewMatQty]=useState('');
+  const [newMatUnit,setNewMatUnit]=useState('u');
+  function addMaterial(){ if(!newMatName.trim()) return; setMaterials(m=>[...m,{id:uid(),name:newMatName.trim(),qty:Number(newMatQty)||0,unit:newMatUnit,checked:false}]); setNewMatName(''); setNewMatQty(''); }
+
+  // Tool helpers
+  const [newTool,setNewTool]=useState('');
+  function addTool(){ if(!newTool.trim()) return; setTools(t=>[...t,{id:uid(),name:newTool.trim(),checked:false}]); setNewTool(''); }
+
+  // Safety helpers
+  const [newSafety,setNewSafety]=useState('');
+  function addSafety(){ if(!newSafety.trim()) return; setSafetyEquipment(s=>[...s,{id:uid(),name:newSafety.trim()}]); setNewSafety(''); }
+
+  async function save(){
+    if(!title.trim()||!client.trim()||!date){
+      showToast('Completá título, cliente y fecha','error'); return;
+    }
+    setSaving(true);
+    const jobData={
+      title:title.trim(), client:client.trim(), clientPhone:clientPhone.trim(),
+      clientEmail:clientEmail.trim(), clientAddress:clientAddress.trim(),
+      date, startTime, type, productionDays,
+      team, teamLead, tasks, materials, tools, safetyEquipment,
+      sketchupLink:sketchupLink.trim(), plansNote:plansNote.trim(), notes:notes.trim(),
+      blueprintUrl:blueprintUrl.trim(), quoteUrl:quoteUrl.trim(), extraUrl:extraUrl.trim(),
+      status: editJobId ? undefined : 'pendiente',
+      updatedAt:Date.now(),
+      ...(editJobId ? {} : {createdBy:user.uid, createdAt:Date.now(), status:'pendiente'})
+    };
+    // Remove undefined keys
+    Object.keys(jobData).forEach(k=>jobData[k]===undefined&&delete jobData[k]);
+    try{
+      if(editJobId){
+        await db.ref('operaciones_jobs/'+editJobId).update(jobData);
+        showToast('Trabajo actualizado','success');
+      } else {
+        await db.ref('operaciones_jobs').push(jobData);
+        showToast('Trabajo creado','success');
+        // WhatsApp notification to team
+        if(team.length>0){
+          const appUrl='https://mundom-apps.github.io/mundom-operaciones/';
+          const msg=`Hola! Se te asignó el trabajo *${title.trim()}* para el cliente *${client.trim()}* en la fecha *${date}*${clientAddress?' — '+clientAddress:''}.\n\nIngresá a la app de Mundo M Operaciones para ver los detalles:\n${appUrl}`;
+          const waBase='https://wa.me/?text='+encodeURIComponent(msg);
+          window.open(waBase,'_blank');
+        }
+      }
+      goBack();
+    } catch(e){
+      showToast('Error al guardar','error');
+      setSaving(false);
+    }
+  }
+
+  if(loading) return <LoadingShell title="Cargando..."/>;
+
+  const operarios=Object.entries(allUsers).filter(([,u])=>u.activo).map(([uid,u])=>({uid,...u}));
+
+  const sections=[
+    {id:'general',label:'General'},
+    {id:'archivos',label:'📎 Archivos'},
+    {id:'equipo',label:'Equipo'},
+    {id:'tareas',label:'Tareas'},
+    {id:'materiales',label:'Materiales'},
+    {id:'herramientas',label:'Tools'},
+    {id:'seguridad',label:'EPP'},
+  ];
+
+  return (
+    <div className="app-shell">
+      <TopBar title={editJobId?'Editar trabajo':'Nuevo trabajo'} onBack={goBack} actions={
+        <button className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none'}} onClick={save} disabled={saving}>
+          {saving?'...':'💾 Guardar'}
+        </button>
+      }/>
+      <div className="screen">
+        {/* Template selector */}
+        {!editJobId && (
+          <div className="card" style={{marginBottom:16}}>
+            <p style={{fontSize:13,fontWeight:700,marginBottom:8}}>📋 Aplicar plantilla</p>
+            <div className="chips-row">
+              {Object.entries(templates).map(([k,t])=>(
+                <div key={k} className="chip" onClick={()=>applyTemplate(k)}>
+                  {JOB_TYPE_ICONS[t.type]||'🔨'} {t.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Section tabs */}
+        <div className="tab-bar" style={{marginBottom:16,overflowX:'auto'}}>
+          {sections.map(s=>(
+            <button key={s.id} className={`tab-btn${activeSection===s.id?' active':''}`} onClick={()=>setActiveSection(s.id)}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* GENERAL */}
+        {activeSection==='general' && (
+          <div>
+            <Field label="Título del trabajo" required>
+              <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="Ej: Instalación de racks — Depósito Norte"/>
+            </Field>
+            <Field label="Tipo de trabajo">
+              <select value={type} onChange={e=>setType(e.target.value)}>
+                {JOB_TYPES.map(t=><option key={t} value={t}>{JOB_TYPE_ICONS[t]} {JOB_TYPE_LABELS[t]}</option>)}
+              </select>
+            </Field>
+            <div className="input-row">
+              <Field label="Fecha" required>
+                <input type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+              </Field>
+              <Field label="Hora inicio">
+                <input type="time" value={startTime} onChange={e=>setStartTime(e.target.value)}/>
+              </Field>
+            </div>
+            <Field label="Cliente" required>
+              <input value={client} onChange={e=>setClient(e.target.value)} placeholder="Nombre del cliente o empresa"/>
+            </Field>
+            <Field label="Teléfono del cliente">
+              <input type="tel" value={clientPhone} onChange={e=>setClientPhone(e.target.value)} placeholder="+598 99 000 000"/>
+            </Field>
+            <Field label="Email del cliente">
+              <input type="email" value={clientEmail} onChange={e=>setClientEmail(e.target.value)} placeholder="cliente@empresa.com"/>
+            </Field>
+            <Field label="Dirección de la obra">
+              <input value={clientAddress} onChange={e=>setClientAddress(e.target.value)} placeholder="Ej: Av. 18 de Julio 1234, Montevideo"/>
+              <AddressMapPreview address={clientAddress} autoShow={false}/>
+            </Field>
+            <Field label="Días de producción estimados">
+              <input type="number" value={productionDays} onChange={e=>setProductionDays(e.target.value)} placeholder="Ej: 15"/>
+            </Field>
+            <Field label="Link SketchUp / Drive (3D)">
+              <input type="url" value={sketchupLink} onChange={e=>setSketchupLink(e.target.value)} placeholder="https://..."/>
+            </Field>
+            <Field label="Nota sobre planos">
+              <textarea value={plansNote} onChange={e=>setPlansNote(e.target.value)} placeholder="Referencias, notas de diseño..."/>
+            </Field>
+            <Field label="Notas generales">
+              <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Información adicional para el equipo..."/>
+            </Field>
+          </div>
+        )}
+
+        {/* ARCHIVOS */}
+        {activeSection==='archivos' && (
+          <div>
+            <div className="alert alert-info" style={{marginBottom:16}}>📎 Pegá los links de Google Drive del plano y la cotización. El equipo los puede abrir directamente desde la app.</div>
+            <FileLinkField
+              label="Plano"
+              icon="📐"
+              value={blueprintUrl}
+              onChange={setBlueprintUrl}
+              placeholder="Link de Google Drive al plano..."
+            />
+            <FileLinkField
+              label="Cotización"
+              icon="💰"
+              value={quoteUrl}
+              onChange={setQuoteUrl}
+              placeholder="Link de Google Drive a la cotización..."
+            />
+            <FileLinkField
+              label="Archivo adicional (3D, foto de referencia...)"
+              icon="📁"
+              value={extraUrl}
+              onChange={setExtraUrl}
+              placeholder="Link de Google Drive u otro servicio..."
+            />
+          </div>
+        )}
+
+        {/* EQUIPO */}
+        {activeSection==='equipo' && (
+          <div>
+            <p style={{fontSize:13,color:'var(--gray-500)',marginBottom:12}}>Seleccioná los miembros del equipo para este trabajo</p>
+            {operarios.map(u=>{
+              const inTeam=team.includes(u.uid);
+              return (
+                <div key={u.uid} className={`check-item${inTeam?' checked':''}`}
+                  onClick={()=>setTeam(t=>inTeam?t.filter(x=>x!==u.uid):[...t,u.uid])}>
+                  <Avatar name={u.nombre} size={32}/>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:14,fontWeight:600}}>{u.nombre}</p>
+                    <p style={{fontSize:11,color:'var(--gray-500)'}}>{ROLE_LABELS[u.rol]||u.rol}</p>
+                  </div>
+                  <input type="checkbox" checked={inTeam} onChange={()=>{}} style={{pointerEvents:'none'}}/>
+                </div>
+              );
+            })}
+            {team.length > 0 && (
+              <div style={{marginTop:16}}>
+                <Field label="Líder del equipo">
+                  <select value={teamLead} onChange={e=>setTeamLead(e.target.value)}>
+                    <option value="">Sin líder asignado</option>
+                    {team.map(uid=><option key={uid} value={uid}>{allUsers[uid]?.nombre||uid}</option>)}
+                  </select>
+                </Field>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAREAS */}
+        {activeSection==='tareas' && (
+          <div>
+            {tasks.map((t,i)=>(
+              <div key={t.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--gray-50)',borderRadius:8,marginBottom:6,border:'1px solid var(--gray-200)'}}>
+                <span style={{color:'var(--gray-400)',fontSize:13}}>#{i+1}</span>
+                <span style={{flex:1,fontSize:13}}>{t.title}</span>
+                <button onClick={()=>moveTask(t.id,-1)} style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--gray-400)'}}>↑</button>
+                <button onClick={()=>moveTask(t.id,1)} style={{background:'none',border:'none',cursor:'pointer',fontSize:14,color:'var(--gray-400)'}}>↓</button>
+                <button onClick={()=>removeTask(t.id)} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--red)'}}>✕</button>
+              </div>
+            ))}
+            <div className="input-row" style={{marginTop:8}}>
+              <Field>
+                <input value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="Nueva tarea..."
+                  onKeyPress={e=>e.key==='Enter'&&addTask()}/>
+              </Field>
+              <button className="btn btn-primary" onClick={addTask}>+</button>
+            </div>
+          </div>
+        )}
+
+        {/* MATERIALES */}
+        {activeSection==='materiales' && (
+          <div>
+            {materials.map((m,i)=>(
+              <div key={m.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--gray-50)',borderRadius:8,marginBottom:6,border:'1px solid var(--gray-200)'}}>
+                <span style={{flex:1,fontSize:13}}>📦 {m.name}</span>
+                {m.qty>0 && <Badge type="badge-gray">{m.qty} {m.unit}</Badge>}
+                <button onClick={()=>setMaterials(ms=>ms.filter(x=>x.id!==m.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--red)'}}>✕</button>
+              </div>
+            ))}
+            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+              <div className="field" style={{flex:'2',minWidth:120,margin:0}}>
+                <input value={newMatName} onChange={e=>setNewMatName(e.target.value)} placeholder="Material..."/>
+              </div>
+              <div className="field" style={{width:70,margin:0}}>
+                <input type="number" value={newMatQty} onChange={e=>setNewMatQty(e.target.value)} placeholder="Qty"/>
+              </div>
+              <div className="field" style={{width:60,margin:0}}>
+                <select value={newMatUnit} onChange={e=>setNewMatUnit(e.target.value)}>
+                  {['u','m','m2','kg','bolsa','ml'].map(u=><option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={addMaterial}>+</button>
+            </div>
+          </div>
+        )}
+
+        {/* HERRAMIENTAS */}
+        {activeSection==='herramientas' && (
+          <div>
+            {tools.map(t=>(
+              <div key={t.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--gray-50)',borderRadius:8,marginBottom:6,border:'1px solid var(--gray-200)'}}>
+                <span style={{fontSize:16}}>🔧</span>
+                <span style={{flex:1,fontSize:13}}>{t.name}</span>
+                <button onClick={()=>setTools(ts=>ts.filter(x=>x.id!==t.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--red)'}}>✕</button>
+              </div>
+            ))}
+            <div className="input-row" style={{marginTop:8}}>
+              <Field><input value={newTool} onChange={e=>setNewTool(e.target.value)} placeholder="Nueva herramienta..." onKeyPress={e=>e.key==='Enter'&&addTool()}/></Field>
+              <button className="btn btn-primary" onClick={addTool}>+</button>
+            </div>
+          </div>
+        )}
+
+        {/* SEGURIDAD (EPP) */}
+        {activeSection==='seguridad' && (
+          <div>
+            <div className="alert alert-warning">⚠️ Cada operario deberá confirmar el uso de este EPP antes de iniciar</div>
+            {safetyEquipment.map(s=>(
+              <div key={s.id} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',background:'var(--yellow-l)',borderRadius:8,marginBottom:6,border:'1px solid var(--yellow)'}}>
+                <span style={{fontSize:16}}>🦺</span>
+                <span style={{flex:1,fontSize:13,fontWeight:600}}>{s.name}</span>
+                <button onClick={()=>setSafetyEquipment(se=>se.filter(x=>x.id!==s.id))} style={{background:'none',border:'none',cursor:'pointer',fontSize:16,color:'var(--red)'}}>✕</button>
+              </div>
+            ))}
+            <div className="input-row" style={{marginTop:8}}>
+              <Field><input value={newSafety} onChange={e=>setNewSafety(e.target.value)} placeholder="Nuevo EPP..." onKeyPress={e=>e.key==='Enter'&&addSafety()}/></Field>
+              <button className="btn btn-primary" onClick={addSafety}>+</button>
+            </div>
+          </div>
+        )}
+
+        <div className="divider"/>
+        <button className="btn btn-primary btn-full" onClick={save} disabled={saving} style={{fontSize:16,padding:14}}>
+          {saving ? 'Guardando...' : (editJobId ? '💾 Guardar cambios' : '✓ Crear trabajo')}
+        </button>
+        <div style={{height:20}}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── JOB EXECUTION SCREEN ─────────────────────────────────────────────────────
+// Steps: 0=Checklist materiales/herr, 1=EPP signoffs, 2=GPS inicio, 3=Tareas+fotos, 4=GPS fin
+function JobExecutionScreen({user, jobId, navigate, goBack, showToast}){
+  const [job,setJob]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [step,setStep]=useState(0);
+  const [users,setUsers]=useState({});
+
+  // Step 0 - checklist
+  const [materials,setMaterials]=useState([]);
+  const [tools,setTools]=useState([]);
+
+  // Step 1 - EPP signoffs per person
+  const [signoffs,setSignoffs]=useState({}); // uid -> {equipment:[{...confirmed}], signature}
+  const [signoffUid,setSignoffUid]=useState(null); // which person is currently signing
+
+  // Step 2 - GPS start
+  const [gpsStart,setGpsStart]=useState(null);
+
+  // Step 3 - tasks + photos
+  const [tasks,setTasks]=useState([]);
+  const [photos,setPhotos]=useState([]);
+  const [taskNotes,setTaskNotes]=useState('');
+
+  // Step 4 - GPS end
+  const [gpsEnd,setGpsEnd]=useState(null);
+
+  const STEPS=['Checklist','EPP','Inicio GPS','Tareas','Fin GPS'];
+
+  useEffect(()=>{
+    db.ref('operaciones_jobs/'+jobId).once('value').then(s=>{
+      const j=s.val();
+      if(j){
+        const jj={id:jobId,...j};
+        setJob(jj);
+        setMaterials((j.materials||[]).map(m=>({...m,checked:m.checked||false})));
+        setTools((j.tools||[]).map(t=>({...t,checked:t.checked||false})));
+        setTasks((j.tasks||[]).map(t=>({...t,completed:t.completed||false})));
+        setPhotos(j.photos||[]);
+        setGpsStart(j.gpsStart||null);
+        setGpsEnd(j.gpsEnd||null);
+        // Init signoffs
+        const teamUids=j.team||[];
+        const initSO={};
+        teamUids.forEach(uid=>{
+          initSO[uid]={
+            equipment:(j.safetyEquipment||[]).map(s=>({...s,confirmed:false})),
+            signature:null
+          };
+        });
+        setSignoffs(initSO);
+        if(teamUids.length>0) setSignoffUid(teamUids[0]);
+      }
+      setLoading(false);
+    });
+    db.ref('usuarios').once('value').then(s=>setUsers(s.val()||{}));
+  },[jobId]);
+
+  async function saveAndFinish(){
+    const updates={
+      tasks, materials, tools, photos,
+      gpsStart, gpsEnd,
+      startTs: job.startTs || (gpsStart?.ts) || Date.now(),
+      endTs: gpsEnd?.ts || Date.now(),
+      status:'completado',
+      updatedAt:Date.now()
+    };
+    if(taskNotes) updates.executionNotes=taskNotes;
+    await db.ref('operaciones_jobs/'+jobId).update(updates);
+    // Save signoffs
+    for(const [uid,so] of Object.entries(signoffs)){
+      if(so.signature){
+        await db.ref('operaciones_signoffs/'+jobId+'/'+uid).set({...so,ts:Date.now()});
+      }
+    }
+    showToast('Trabajo completado','success');
+    goBack();
+  }
+
+  async function saveProgress(){
+    await db.ref('operaciones_jobs/'+jobId).update({
+      tasks, materials, tools, photos,
+      gpsStart, gpsEnd,
+      status:'en_curso',
+      startTs: job.startTs || (gpsStart?.ts) || Date.now(),
+      updatedAt:Date.now()
+    });
+    showToast('Progreso guardado','success');
+  }
+
+  if(loading) return <LoadingShell title="Cargando..."/>;
+  if(!job) return <div className="app-shell"><TopBar title="Error" onBack={goBack}/><div className="screen"><p>No se encontró el trabajo.</p></div></div>;
+
+  const teamUids=job.team||[];
+
+  return (
+    <div className="app-shell">
+      <TopBar title={`🛠️ ${job.title}`} onBack={goBack} actions={
+        <button className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none'}} onClick={saveProgress}>
+          💾
+        </button>
+      }/>
+      <div className="screen">
+        <StepBar steps={STEPS} current={step}/>
+
+        {/* ── STEP 0: CHECKLIST MATERIALES / HERRAMIENTAS ── */}
+        {step===0 && (
+          <div>
+            <div className="alert alert-info">Verificá que tenés todo antes de salir</div>
+
+            {materials.length > 0 && (
+              <div className="card">
+                <div className="card-title">📦 Materiales</div>
+                {materials.map((m,i)=>(
+                  <div key={m.id||i} className={`check-item${m.checked?' checked':''}`}
+                    onClick={()=>setMaterials(ms=>ms.map((x,j)=>j===i?{...x,checked:!x.checked}:x))}>
+                    <input type="checkbox" checked={m.checked} onChange={()=>{}}/>
+                    <span>{m.name}{m.qty>0?` — ${m.qty} ${m.unit||'u'}`:''}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {tools.length > 0 && (
+              <div className="card">
+                <div className="card-title">🔧 Herramientas</div>
+                {tools.map((t,i)=>(
+                  <div key={t.id||i} className={`check-item${t.checked?' checked':''}`}
+                    onClick={()=>setTools(ts=>ts.map((x,j)=>j===i?{...x,checked:!x.checked}:x))}>
+                    <input type="checkbox" checked={t.checked} onChange={()=>{}}/>
+                    <span>{t.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {materials.length===0 && tools.length===0 && (
+              <div className="empty-state"><div className="es-icon">✅</div><p>Sin checklist definido</p></div>
+            )}
+
+            <button className="btn btn-primary btn-full" style={{marginTop:16}} onClick={()=>setStep(1)}>
+              Siguiente → EPP
+            </button>
+          </div>
+        )}
+
+        {/* ── STEP 1: EPP SIGNOFFS ── */}
+        {step===1 && (
+          <div>
+            {(job.safetyEquipment||[]).length===0 ? (
+              <div>
+                <div className="empty-state"><div className="es-icon">🦺</div><p>Sin EPP requerido para este trabajo</p></div>
+                <div style={{display:'flex',gap:10,marginTop:16}}>
+                  <button className="btn btn-secondary btn-full" onClick={()=>setStep(0)}>← Atrás</button>
+                  <button className="btn btn-primary btn-full" onClick={()=>setStep(2)}>Siguiente →</button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="alert alert-warning">Cada operario debe confirmar su EPP y firmar</div>
+                {/* Person selector */}
+                <div style={{display:'flex',gap:8,marginBottom:16,overflow:'auto'}}>
+                  {teamUids.map(uid=>{
+                    const so=signoffs[uid]||{};
+                    const done=so.signature&&(so.equipment||[]).every(e=>e.confirmed);
+                    return (
+                      <button key={uid} onClick={()=>setSignoffUid(uid)}
+                        className="btn btn-sm" style={{
+                          background:signoffUid===uid?'var(--orange)':done?'var(--green)':'var(--gray-200)',
+                          color:signoffUid===uid||done?'#fff':'var(--gray-700)',
+                          flexShrink:0
+                        }}>
+                        {done?'✓ ':''}{users[uid]?.nombre?.split(' ')[0]||uid}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {signoffUid && (
+                  <div className="card">
+                    <p style={{fontWeight:700,fontSize:14,marginBottom:12}}>
+                      {users[signoffUid]?.nombre||signoffUid}
+                    </p>
+                    {/* EPP checklist */}
+                    {(signoffs[signoffUid]?.equipment||[]).map((eq,i)=>(
+                      <div key={eq.id||i} className={`check-item${eq.confirmed?' checked':''}`}
+                        onClick={()=>setSignoffs(prev=>{
+                          const so={...prev[signoffUid]};
+                          so.equipment=so.equipment.map((x,j)=>j===i?{...x,confirmed:!x.confirmed}:x);
+                          return {...prev,[signoffUid]:so};
+                        })}>
+                        <input type="checkbox" checked={eq.confirmed} onChange={()=>{}}/>
+                        <span>🦺 {eq.name}</span>
+                      </div>
+                    ))}
+                    {/* Signature */}
+                    <div style={{marginTop:12}}>
+                      {signoffs[signoffUid]?.signature ? (
+                        <div>
+                          <p style={{fontSize:12,color:'var(--green)',fontWeight:700,marginBottom:6}}>✓ Firma registrada</p>
+                          <img src={signoffs[signoffUid].signature} alt="firma" style={{maxWidth:'100%',border:'1px solid var(--gray-200)',borderRadius:6}}/>
+                          <button className="btn btn-sm btn-secondary" style={{marginTop:6}}
+                            onClick={()=>setSignoffs(prev=>({...prev,[signoffUid]:{...prev[signoffUid],signature:null}}))}>
+                            Repetir firma
+                          </button>
+                        </div>
+                      ) : (
+                        <SignatureCanvas label="Firma del operario" onSave={sig=>setSignoffs(prev=>({...prev,[signoffUid]:{...prev[signoffUid],signature:sig}}))}/>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{display:'flex',gap:10,marginTop:16}}>
+                  <button className="btn btn-secondary btn-full" onClick={()=>setStep(0)}>← Atrás</button>
+                  <button className="btn btn-primary btn-full" onClick={()=>setStep(2)}>Siguiente →</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── STEP 2: GPS START ── */}
+        {step===2 && (
+          <div>
+            <div className="alert alert-info">Capturá la ubicación al llegar a la obra</div>
+            <div className="card">
+              <div className="card-title">📍 Ubicación de inicio</div>
+              <GpsCapture label="Ubicación de inicio" value={gpsStart} onCapture={setGpsStart}/>
+            </div>
+            <div style={{display:'flex',gap:10,marginTop:16}}>
+              <button className="btn btn-secondary btn-full" onClick={()=>setStep(1)}>← Atrás</button>
+              <button className="btn btn-primary btn-full" onClick={()=>setStep(3)}>Siguiente →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: TASKS + PHOTOS ── */}
+        {step===3 && (
+          <div>
+            {tasks.length > 0 && (
+              <div className="card">
+                <div className="section-head">
+                  <div className="card-title" style={{margin:0}}>Tareas</div>
+                  <span style={{fontSize:13,color:'var(--gray-500)'}}>
+                    {tasks.filter(t=>t.completed).length}/{tasks.length}
+                  </span>
+                </div>
+                <ProgressBar value={tasks.filter(t=>t.completed).length} max={tasks.length}/>
+                <div style={{marginTop:10}}>
+                  {tasks.map((t,i)=>(
+                    <div key={t.id||i} className={`check-item${t.completed?' checked':''}`}
+                      onClick={()=>setTasks(ts=>ts.map((x,j)=>j===i?{...x,completed:!x.completed,completedBy:user.uid,completedAt:Date.now()}:x))}>
+                      <input type="checkbox" checked={t.completed} onChange={()=>{}}/>
+                      <span>{t.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="card">
+              <div className="card-title">📷 Fotos del trabajo</div>
+              <PhotoCapture photos={photos} onAdd={p=>setPhotos(ps=>[...ps,p])} onRemove={id=>setPhotos(ps=>ps.filter(p=>p.id!==id))} maxPhotos={12}/>
+            </div>
+
+            <div className="card">
+              <Field label="Notas de ejecución">
+                <textarea value={taskNotes} onChange={e=>setTaskNotes(e.target.value)} placeholder="Observaciones, incidentes, información relevante..."/>
+              </Field>
+            </div>
+
+            <div style={{display:'flex',gap:10}}>
+              <button className="btn btn-secondary btn-full" onClick={()=>setStep(2)}>← Atrás</button>
+              <button className="btn btn-primary btn-full" onClick={()=>setStep(4)}>Siguiente →</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 4: GPS END + FINISH ── */}
+        {step===4 && (
+          <div>
+            <div className="alert alert-success">¡Último paso! Capturá la ubicación final y terminá</div>
+            <div className="card">
+              <div className="card-title">📍 Ubicación de fin</div>
+              <GpsCapture label="Ubicación de fin" value={gpsEnd} onCapture={setGpsEnd}/>
+            </div>
+            {/* Summary */}
+            <div className="card">
+              <div className="card-title">Resumen</div>
+              <p style={{fontSize:13,marginBottom:4}}>✅ Tareas: {tasks.filter(t=>t.completed).length}/{tasks.length}</p>
+              <p style={{fontSize:13,marginBottom:4}}>📷 Fotos: {photos.length}</p>
+              <p style={{fontSize:13,marginBottom:4}}>🦺 Firmas EPP: {Object.values(signoffs).filter(s=>s.signature).length}/{teamUids.length}</p>
+              <p style={{fontSize:13,marginBottom:4}}>📍 GPS inicio: {gpsStart?'✓':'Sin capturar'}</p>
+              <p style={{fontSize:13}}>📍 GPS fin: {gpsEnd?'✓':'Sin capturar'}</p>
+            </div>
+            <div style={{display:'flex',gap:10}}>
+              <button className="btn btn-secondary btn-full" onClick={()=>setStep(3)}>← Atrás</button>
+              <button className="btn btn-success btn-full" onClick={saveAndFinish}>
+                ✓ Finalizar trabajo
+              </button>
+            </div>
+          </div>
+        )}
+        <div style={{height:20}}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── CONFORMITY SCREEN ────────────────────────────────────────────────────────
+function ConformityScreen({user, jobId, navigate, goBack, showToast}){
+  const [job,setJob]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [saving,setSaving]=useState(false);
+  const [clientName,setClientName]=useState('');
+  const [observations,setObservations]=useState('');
+  const [signature,setSignature]=useState(null);
+  const [photos,setPhotos]=useState([]);
+
+  useEffect(()=>{
+    db.ref('operaciones_jobs/'+jobId).once('value').then(s=>{
+      const j=s.val();
+      if(j){
+        setJob({id:jobId,...j});
+        setClientName(j.client||'');
+        if(j.conformity){
+          setClientName(j.conformity.clientName||j.client||'');
+          setObservations(j.conformity.observations||'');
+          setSignature(j.conformity.signature||null);
+          setPhotos(j.conformity.photos||[]);
+        }
+      }
+      setLoading(false);
+    });
+  },[jobId]);
+
+  async function save(){
+    if(!clientName.trim()||!signature){
+      showToast('Completá nombre y firma del cliente','error'); return;
+    }
+    setSaving(true);
+    const conformity={
+      clientName:clientName.trim(),
+      observations:observations.trim(),
+      signature,
+      photos,
+      ts:Date.now(),
+      signedBy:user.uid
+    };
+    await db.ref('operaciones_jobs/'+jobId).update({
+      conformity,
+      status:'completado',
+      updatedAt:Date.now()
+    });
+    showToast('Conformidad registrada','success');
+    goBack();
+  }
+
+  function shareWhatsApp(){
+    if(!job?.clientPhone){showToast('Sin teléfono del cliente','error');return;}
+    const msg=`¡Hola ${clientName}! El trabajo "${job.title}" ha sido completado por el equipo de Mundo M. Gracias por la confianza.`;
+    window.open(whatsappUrl(job.clientPhone,msg),'_blank');
+  }
+
+  function printPDF(){
+    // Build simple printable HTML
+    const printWin=window.open('','_blank');
+    if(!printWin) return;
+    const date=new Date().toLocaleDateString('es-UY');
+    const taskRows=(job?.tasks||[]).map(t=>`
+      <tr><td>${t.completed?'✅':'⬜'}</td><td>${t.title}</td></tr>
+    `).join('');
+    const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>Conformidad — ${job?.title}</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:32px;max-width:700px;margin:auto;}
+      h1{color:#F47920;} h2{color:#374151;border-bottom:1px solid #e5e7eb;padding-bottom:6px;}
+      table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+      td,th{padding:6px 8px;border:1px solid #e5e7eb;font-size:13px;}
+      .sig{border:1px solid #ccc;max-width:300px;}
+      .footer{margin-top:40px;font-size:12px;color:#9ca3af;}
+    </style></head><body>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+      <img src="${window.MUNDOM_LOGO}" width="60" style="border-radius:50%"/>
+      <div><h1 style="margin:0">Mundo M — Operaciones</h1><p style="margin:0;color:#6b7280">Registro de conformidad</p></div>
+    </div>
+    <h2>Datos del trabajo</h2>
+    <table><tr><th>Campo</th><th>Valor</th></tr>
+      <tr><td>Trabajo</td><td>${job?.title||''}</td></tr>
+      <tr><td>Tipo</td><td>${JOB_TYPE_LABELS[job?.type]||''}</td></tr>
+      <tr><td>Cliente</td><td>${job?.client||''}</td></tr>
+      <tr><td>Dirección</td><td>${job?.clientAddress||'—'}</td></tr>
+      <tr><td>Fecha</td><td>${job?.date||''}</td></tr>
+      <tr><td>Fecha de conformidad</td><td>${date}</td></tr>
+    </table>
+    <h2>Tareas ejecutadas</h2>
+    <table><tr><th>Estado</th><th>Tarea</th></tr>${taskRows||'<tr><td colspan=2>Sin tareas registradas</td></tr>'}</table>
+    <h2>Conformidad del cliente</h2>
+    <p><strong>Nombre:</strong> ${clientName}</p>
+    <p><strong>Observaciones:</strong> ${observations||'Sin observaciones'}</p>
+    ${signature?`<p><strong>Firma:</strong></p><img src="${signature}" class="sig"/>`: '<p><em>Sin firma</em></p>'}
+    <div class="footer">
+      Documento generado el ${date} | Mundo M — ${job?.client} | www.mundom.com.uy
+    </div>
+    </body></html>`;
+    printWin.document.write(html);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(()=>printWin.print(),500);
+  }
+
+  if(loading) return <LoadingShell title="Conformidad"/>;
+
+  return (
+    <div className="app-shell">
+      <TopBar title="Conformidad del cliente" onBack={goBack}/>
+      <div className="screen">
+        <div className="alert alert-info">El cliente confirma que el trabajo fue realizado correctamente</div>
+
+        <div className="card">
+          <div className="card-title">Trabajo completado</div>
+          <p style={{fontSize:14,fontWeight:700}}>{job?.title}</p>
+          <p style={{fontSize:13,color:'var(--gray-500)'}}>{job?.client} · {job?.date}</p>
+          {job?.tasks && (
+            <div style={{marginTop:8}}>
+              <ProgressBar value={(job.tasks||[]).filter(t=>t.completed).length} max={(job.tasks||[]).length}/>
+              <p style={{fontSize:11,color:'var(--gray-500)',marginTop:3}}>
+                {(job.tasks||[]).filter(t=>t.completed).length}/{(job.tasks||[]).length} tareas completadas
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <Field label="Nombre del cliente que firma" required>
+            <input value={clientName} onChange={e=>setClientName(e.target.value)} placeholder="Nombre completo"/>
+          </Field>
+          <Field label="Observaciones del cliente">
+            <textarea value={observations} onChange={e=>setObservations(e.target.value)}
+              placeholder="El cliente puede indicar observaciones o comentarios sobre el trabajo realizado..."/>
+          </Field>
+        </div>
+
+        <div className="card">
+          <div className="card-title">Fotos de entrega</div>
+          <PhotoCapture photos={photos} onAdd={p=>setPhotos(ps=>[...ps,p])} onRemove={id=>setPhotos(ps=>ps.filter(p=>p.id!==id))} maxPhotos={6}/>
+        </div>
+
+        <div className="card">
+          <div className="card-title">Firma del cliente</div>
+          {signature ? (
+            <div>
+              <div className="alert alert-success">✓ Firma registrada</div>
+              <img src={signature} alt="firma" style={{maxWidth:'100%',border:'1px solid var(--gray-200)',borderRadius:6,marginBottom:8}}/>
+              <button className="btn btn-secondary btn-sm" onClick={()=>setSignature(null)}>Repetir firma</button>
+            </div>
+          ) : (
+            <SignatureCanvas label="El cliente firma aquí" height={180} onSave={setSignature}/>
+          )}
+        </div>
+
+        <button className="btn btn-success btn-full" onClick={save} disabled={saving} style={{fontSize:16,padding:14}}>
+          {saving ? 'Guardando...' : '✓ Registrar conformidad'}
+        </button>
+
+        <div style={{display:'flex',gap:10,marginTop:10}}>
+          <button className="btn btn-secondary btn-full" onClick={printPDF}>🖨️ PDF</button>
+          {job?.clientPhone && (
+            <button className="btn btn-full" style={{background:'#25d366',color:'#fff'}} onClick={shareWhatsApp}>
+              WhatsApp
+            </button>
+          )}
+        </div>
+        {job?.clientEmail && (
+          <button className="btn btn-full" style={{marginTop:8,background:'var(--blue)',color:'#fff'}} onClick={()=>{
+            const subject=encodeURIComponent(`Conformidad de trabajo — ${job.title} — Mundo M`);
+            const body=encodeURIComponent(
+              `Estimado/a ${clientName},\n\n` +
+              `Le informamos que el trabajo "${job.title}" realizado en ${job.clientAddress||'su local'} ha sido completado exitosamente por el equipo de Mundo M.\n\n` +
+              `Fecha: ${job.date}\nTipo: ${JOB_TYPE_LABELS[job.type]||job.type}\n` +
+              (observations?`Observaciones: ${observations}\n`:'')+
+              `\nEn el PDF adjunto encontrará el registro completo con la firma de conformidad.\n\n` +
+              `Gracias por confiar en Mundo M.\n\nSaludos,\nEquipo Mundo M\nwww.mundom.com.uy`
+            );
+            window.open(`mailto:${job.clientEmail}?subject=${subject}&body=${body}`,'_blank');
+          }}>
+            ✉️ Enviar email al cliente
+          </button>
+        )}
+        <div style={{height:20}}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── METRICS DASHBOARD SCREEN ─────────────────────────────────────────────────
+function MetricsDashboardScreen({user}){
+  const [jobs,setJobs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [period,setPeriod]=useState('30'); // days
+
+  useEffect(()=>{
+    const ref=db.ref('operaciones_jobs');
+    const h=ref.on('value',snap=>{
+      const data=snap.val()||{};
+      setJobs(Object.entries(data).map(([id,v])=>({id,...v})));
+      setLoading(false);
+    });
+    return()=>ref.off('value',h);
+  },[]);
+
+  const days=Number(period);
+  const cutoff=Date.now()-days*86400000;
+
+  const filtered=useMemo(()=>
+    jobs.filter(j=>{
+      if(!j.date) return false;
+      const ts=new Date(j.date+'T00:00:00').getTime();
+      return ts>=cutoff;
+    })
+  ,[jobs,cutoff]);
+
+  const total=filtered.length;
+  const completado=filtered.filter(j=>j.status==='completado').length;
+  const enCurso=filtered.filter(j=>j.status==='en_curso').length;
+  const pendiente=filtered.filter(j=>j.status==='pendiente').length;
+  const cancelado=filtered.filter(j=>j.status==='cancelado').length;
+  const rate=total?Math.round(completado/total*100):0;
+
+  // By type
+  const byType=useMemo(()=>{
+    const m={};
+    filtered.forEach(j=>{ m[j.type]=(m[j.type]||0)+1; });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  },[filtered]);
+
+  // Last 7 days bar chart
+  const last7=useMemo(()=>{
+    const days7=Array.from({length:7},(_,i)=>{
+      const d=new Date(); d.setDate(d.getDate()-6+i);
+      return {key:dateKey(d), label:d.toLocaleDateString('es-UY',{weekday:'short'})};
+    });
+    return days7.map(({key,label})=>({
+      label,
+      total:(jobs.filter(j=>j.date===key)).length,
+      done:(jobs.filter(j=>j.date===key&&j.status==='completado')).length,
+    }));
+  },[jobs]);
+  const maxBar=Math.max(1,...last7.map(d=>d.total));
+
+  // By operator
+  const byOperator=useMemo(()=>{
+    const m={};
+    filtered.forEach(j=>{
+      (j.team||[]).forEach(uid=>{
+        if(!m[uid]) m[uid]={uid,total:0,done:0};
+        m[uid].total++;
+        if(j.status==='completado') m[uid].done++;
+      });
+    });
+    return Object.values(m).sort((a,b)=>b.total-a.total);
+  },[filtered]);
+
+  // Avg tasks completion
+  const avgTasksRate=useMemo(()=>{
+    const comp=filtered.filter(j=>j.status==='completado'&&(j.tasks||[]).length>0);
+    if(!comp.length) return null;
+    const avg=comp.reduce((s,j)=>{
+      const done=j.tasks.filter(t=>t.completed).length;
+      return s+done/j.tasks.length;
+    },0)/comp.length;
+    return Math.round(avg*100);
+  },[filtered]);
+
+  return (
+    <div className="app-shell">
+      <div className="top-bar"><MundoLogo size={32}/><h1>Métricas</h1></div>
+      <div className="screen">
+        {/* Period selector */}
+        <div className="tab-bar" style={{marginBottom:16}}>
+          {[['7','7 días'],['30','30 días'],['90','90 días']].map(([v,l])=>(
+            <button key={v} className={`tab-btn${period===v?' active':''}`} onClick={()=>setPeriod(v)}>{l}</button>
+          ))}
+        </div>
+
+        {loading ? <div style={{textAlign:'center',padding:40}}><div className="spinner" style={{margin:'auto'}}/></div> : (
+          <>
+            {/* Stats */}
+            <div className="stat-grid">
+              <div className="stat-box"><div className="stat-val">{total}</div><div className="stat-lbl">Total trabajos</div></div>
+              <div className="stat-box"><div className="stat-val" style={{color:'var(--green)'}}>{rate}%</div><div className="stat-lbl">Completados</div></div>
+              <div className="stat-box"><div className="stat-val" style={{color:'var(--blue)'}}>{enCurso}</div><div className="stat-lbl">En curso</div></div>
+              <div className="stat-box"><div className="stat-val" style={{color:'var(--yellow)'}}>{pendiente}</div><div className="stat-lbl">Pendientes</div></div>
+            </div>
+            {avgTasksRate!==null && (
+              <div className="card" style={{textAlign:'center'}}>
+                <p style={{fontSize:13,color:'var(--gray-500)',marginBottom:4}}>Avg. completitud de tareas</p>
+                <p style={{fontSize:32,fontWeight:800,color:'var(--green)'}}>{avgTasksRate}%</p>
+                <ProgressBar value={avgTasksRate} max={100} color="var(--green)"/>
+              </div>
+            )}
+
+            {/* Last 7 days chart */}
+            <div className="card">
+              <div className="card-title">Últimos 7 días</div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:6,height:80}}>
+                {last7.map((d,i)=>(
+                  <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                    <div style={{flex:1,width:'100%',display:'flex',flexDirection:'column',justifyContent:'flex-end',gap:2}}>
+                      {d.done>0 && <div style={{background:'var(--green)',borderRadius:3,height:Math.max(4,Math.round(d.done/maxBar*60))+'px'}}/>}
+                      {(d.total-d.done)>0 && <div style={{background:'var(--orange)',borderRadius:3,height:Math.max(4,Math.round((d.total-d.done)/maxBar*60))+'px'}}/>}
+                    </div>
+                    <span style={{fontSize:9,color:'var(--gray-400)'}}>{d.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{display:'flex',gap:12,marginTop:8,justifyContent:'center'}}>
+                <span style={{fontSize:11,color:'var(--green)',fontWeight:600}}>■ Completado</span>
+                <span style={{fontSize:11,color:'var(--orange)',fontWeight:600}}>■ Otros</span>
+              </div>
+            </div>
+
+            {/* By type */}
+            {byType.length > 0 && (
+              <div className="card">
+                <div className="card-title">Por tipo de trabajo</div>
+                {byType.map(([type,count])=>(
+                  <div key={type} style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                    <span style={{fontSize:20}}>{JOB_TYPE_ICONS[type]||'🔨'}</span>
+                    <span style={{flex:1,fontSize:13,fontWeight:600}}>{JOB_TYPE_LABELS[type]||type}</span>
+                    <Badge type="badge-orange">{count}</Badge>
+                    <div style={{width:80}}>
+                      <ProgressBar value={count} max={Math.max(...byType.map(x=>x[1]))} color="var(--orange)"/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* By operator */}
+            {byOperator.length > 0 && (
+              <div className="card">
+                <div className="card-title">Por operario</div>
+                {byOperator.map(o=>(
+                  <OpMetricRow key={o.uid} uid={o.uid} total={o.total} done={o.done}/>
+                ))}
+              </div>
+            )}
+
+            {total===0 && (
+              <div className="empty-state"><div className="es-icon">📊</div><p>Sin datos en el período seleccionado</p></div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function OpMetricRow({uid, total, done}){
+  const [name,setName]=useState(uid);
+  useEffect(()=>{
+    db.ref('usuarios/'+uid+'/nombre').once('value').then(s=>{ if(s.val()) setName(s.val()); });
+  },[uid]);
+  const rate=total?Math.round(done/total*100):0;
+  return (
+    <div style={{marginBottom:10}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+        <Avatar name={name} size={28}/>
+        <span style={{flex:1,fontSize:13,fontWeight:600}}>{name}</span>
+        <span style={{fontSize:12,color:'var(--gray-500)'}}>{done}/{total}</span>
+        <Badge type={rate>=80?'badge-green':rate>=50?'badge-yellow':'badge-gray'}>{rate}%</Badge>
+      </div>
+      <ProgressBar value={done} max={total} color={rate>=80?'var(--green)':rate>=50?'var(--yellow)':'var(--gray-400)'}/>
+    </div>
+  );
+}
+
+// ─── PROFILE SCREEN ───────────────────────────────────────────────────────────
+function ProfileScreen({user}){
+  async function logout(){ await auth.signOut(); }
+  return (
+    <div className="app-shell">
+      <div className="top-bar"><MundoLogo size={32}/><h1>Mi perfil</h1></div>
+      <div className="screen">
+        <div className="card" style={{textAlign:'center',paddingTop:24}}>
+          <div style={{display:'flex',justifyContent:'center',marginBottom:12}}><Avatar name={user.nombre} size={72}/></div>
+          <h2 style={{fontSize:20,fontWeight:800}}>{user.nombre}</h2>
+          <p style={{fontSize:14,color:'var(--gray-500)',marginBottom:8}}>{user.email}</p>
+          <RoleBadge rol={user.rol}/>
+        </div>
+        <div className="card">
+          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0'}}>
+            <span style={{fontSize:14,color:'var(--gray-600)'}}>App</span>
+            <span style={{fontSize:14,fontWeight:600}}>Mundo M Operaciones</span>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderTop:'1px solid var(--gray-100)'}}>
+            <span style={{fontSize:14,color:'var(--gray-600)'}}>Versión</span>
+            <span style={{fontSize:14,fontWeight:600}}>2.0.0</span>
+          </div>
+        </div>
+        <button className="btn btn-danger btn-full" onClick={logout} style={{marginTop:8}}>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── ADMIN SCREEN ─────────────────────────────────────────────────────────────
+function AdminScreen({user, navigate, showToast, confirm}){
+  const [tab,setTab]=useState('users');
+  const [users,setUsers]=useState([]);
+  const [templates,setTemplates]=useState([]);
+
+  useEffect(()=>{
+    const ref=db.ref('usuarios');
+    const h=ref.on('value',snap=>{
+      const d=snap.val()||{};
+      setUsers(Object.entries(d).map(([uid,u])=>({uid,...u})));
+    });
+    return()=>ref.off('value',h);
+  },[]);
+
+  useEffect(()=>{
+    const ref=db.ref('operaciones_templates');
+    const h=ref.on('value',snap=>{
+      const d=snap.val()||{};
+      setTemplates(Object.entries(d).map(([id,t])=>({id,...t})));
+    });
+    return()=>ref.off('value',h);
+  },[]);
+
+  async function toggleUser(uid,activo){
+    await db.ref('usuarios/'+uid+'/activo').set(!activo);
+    showToast(!activo?'Usuario activado':'Usuario desactivado','success');
+  }
+  async function deleteUser(uid){
+    confirm('¿Eliminar este usuario? No podrá ingresar a ninguna app.',async()=>{
+      await db.ref('usuarios/'+uid).remove();
+      showToast('Usuario eliminado','success');
+    });
+  }
+  async function deleteTemplate(id){
+    confirm('¿Eliminar esta plantilla?',async()=>{
+      await db.ref('operaciones_templates/'+id).remove();
+      showToast('Plantilla eliminada','success');
+    });
+  }
+
+  return (
+    <div className="app-shell">
+      <div className="top-bar"><MundoLogo size={32}/><h1>Administración</h1></div>
+      <div className="screen">
+        <div className="tab-bar">
+          <button className={`tab-btn${tab==='users'?' active':''}`} onClick={()=>setTab('users')}>👥 Usuarios</button>
+          <button className={`tab-btn${tab==='templates'?' active':''}`} onClick={()=>setTab('templates')}>📋 Plantillas</button>
+        </div>
+
+        {/* USERS TAB */}
+        {tab==='users' && (
+          <div>
+            <div className="section-head">
+              <h2>Usuarios ({users.length})</h2>
+              <button className="btn btn-primary btn-sm" onClick={()=>navigate('userCreate',{})}>+ Nuevo</button>
+            </div>
+            {users.map(u=>(
+              <div key={u.uid} className="card" style={{marginBottom:10}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <Avatar name={u.nombre} size={40} color={u.activo?'var(--orange)':'var(--gray-300)'}/>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:14,fontWeight:700}}>{u.nombre}</p>
+                    <p style={{fontSize:12,color:'var(--gray-500)'}}>{u.email}</p>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-end'}}>
+                    <RoleBadge rol={u.rol}/>
+                    <Badge type={u.activo?'badge-green':'badge-gray'}>{u.activo?'Activo':'Inactivo'}</Badge>
+                  </div>
+                </div>
+                <div style={{display:'flex',gap:8,marginTop:10}}>
+                  <button className="btn btn-sm btn-secondary" onClick={()=>toggleUser(u.uid,u.activo)}>
+                    {u.activo?'Desactivar':'Activar'}
+                  </button>
+                  {u.uid!==user.uid && (
+                    <button className="btn btn-sm btn-danger" onClick={()=>deleteUser(u.uid)}>Eliminar</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* TEMPLATES TAB */}
+        {tab==='templates' && (
+          <div>
+            <div className="section-head">
+              <h2>Plantillas ({templates.length})</h2>
+              <button className="btn btn-primary btn-sm" onClick={()=>navigate('templateEdit',{})}>+ Nueva</button>
+            </div>
+            <div className="alert alert-info">Las plantillas por defecto están integradas. Acá podés agregar plantillas personalizadas.</div>
+            {/* Show default templates as read-only */}
+            {Object.entries(DEFAULT_TEMPLATES).map(([k,t])=>(
+              <div key={k} className="card" style={{marginBottom:10,opacity:.8}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:28}}>{JOB_TYPE_ICONS[t.type]}</span>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:14,fontWeight:700}}>{t.name}</p>
+                    <p style={{fontSize:12,color:'var(--gray-500)'}}>{t.tasks.length} tareas · {t.materials.length} materiales · {t.safetyEquipment.length} EPP</p>
+                  </div>
+                  <Badge type="badge-gray">Default</Badge>
+                </div>
+              </div>
+            ))}
+            {templates.map(t=>(
+              <div key={t.id} className="card" style={{marginBottom:10}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:28}}>{JOB_TYPE_ICONS[t.type]||'📋'}</span>
+                  <div style={{flex:1}}>
+                    <p style={{fontSize:14,fontWeight:700}}>{t.name}</p>
+                    <p style={{fontSize:12,color:'var(--gray-500)'}}>{(t.tasks||[]).length} tareas</p>
+                  </div>
+                  <Badge type="badge-orange">Custom</Badge>
+                </div>
+                <div style={{display:'flex',gap:8,marginTop:10}}>
+                  <button className="btn btn-sm btn-secondary" onClick={()=>navigate('templateEdit',{editId:t.id})}>Editar</button>
+                  <button className="btn btn-sm btn-danger" onClick={()=>deleteTemplate(t.id)}>Eliminar</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── USER CREATE SCREEN ───────────────────────────────────────────────────────
+function UserCreateScreen({user, goBack, showToast}){
+  const [nombre,setNombre]=useState('');
+  const [email,setEmail]=useState('');
+  const [password,setPassword]=useState('');
+  const [rol,setRol]=useState('operario');
+  const [saving,setSaving]=useState(false);
+  const [err,setErr]=useState('');
+
+  async function create(){
+    if(!nombre.trim()||!email.trim()||password.length<6){
+      setErr('Completá todos los campos. Contraseña mínimo 6 caracteres.'); return;
+    }
+    setSaving(true); setErr('');
+    try{
+      // Use secondary app instance to create user without logging out current user
+      const secondApp = firebase.apps.length>1
+        ? firebase.app('secondary')
+        : firebase.initializeApp(FIREBASE_CONFIG,'secondary');
+      const secondAuth = secondApp.auth();
+      const cred = await secondAuth.createUserWithEmailAndPassword(email.trim(), password);
+      await db.ref('usuarios/'+cred.user.uid).set({
+        nombre:nombre.trim(), email:email.trim(), rol, activo:true,
+        createdAt:Date.now(), createdBy:user.uid
+      });
+      await secondAuth.signOut();
+      showToast('Usuario creado: '+nombre,'success');
+      goBack();
+    } catch(e){
+      setErr(e.message||'Error al crear usuario');
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <TopBar title="Nuevo usuario" onBack={goBack}/>
+      <div className="screen">
+        <Field label="Nombre completo" required>
+          <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Juan Pérez"/>
+        </Field>
+        <Field label="Email" required>
+          <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="juan@mundoM.com"/>
+        </Field>
+        <Field label="Contraseña temporal" required hint="Mínimo 6 caracteres. El usuario puede cambiarla después.">
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••"/>
+        </Field>
+        <Field label="Rol">
+          <select value={rol} onChange={e=>setRol(e.target.value)}>
+            {Object.entries(ROLE_LABELS).map(([v,l])=><option key={v} value={v}>{l}</option>)}
+          </select>
+        </Field>
+        {err && <p style={{color:'var(--red)',fontSize:13,marginBottom:12}}>{err}</p>}
+        <button className="btn btn-primary btn-full" onClick={create} disabled={saving} style={{fontSize:15,padding:14}}>
+          {saving ? 'Creando...' : '+ Crear usuario'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── TEMPLATE EDIT SCREEN ─────────────────────────────────────────────────────
+function TemplateEditScreen({editId, goBack, showToast}){
+  const [name,setName]=useState('');
+  const [type,setType]=useState('racks');
+  const [tasks,setTasks]=useState([]);
+  const [materials,setMaterials]=useState([]);
+  const [safetyEquipment,setSafetyEquipment]=useState([]);
+  const [saving,setSaving]=useState(false);
+  const [newTask,setNewTask]=useState('');
+  const [newMat,setNewMat]=useState('');
+  const [newSafety,setNewSafety]=useState('');
+
+  useEffect(()=>{
+    if(!editId) return;
+    db.ref('operaciones_templates/'+editId).once('value').then(s=>{
+      const t=s.val();
+      if(!t) return;
+      setName(t.name||'');
+      setType(t.type||'racks');
+      setTasks(t.tasks||[]);
+      setMaterials(t.materials||[]);
+      setSafetyEquipment(t.safetyEquipment||[]);
+    });
+  },[editId]);
+
+  async function save(){
+    if(!name.trim()){showToast('Ingresá un nombre','error');return;}
+    setSaving(true);
+    const data={name:name.trim(),type,tasks,materials,safetyEquipment,updatedAt:Date.now()};
+    if(editId) await db.ref('operaciones_templates/'+editId).update(data);
+    else await db.ref('operaciones_templates').push(data);
+    showToast('Plantilla guardada','success');
+    goBack();
+  }
+
+  return (
+    <div className="app-shell">
+      <TopBar title={editId?'Editar plantilla':'Nueva plantilla'} onBack={goBack} actions={
+        <button className="btn btn-sm" style={{background:'rgba(255,255,255,.2)',color:'#fff',border:'none'}} onClick={save} disabled={saving}>
+          {saving?'...':'💾'}
+        </button>
+      }/>
+      <div className="screen">
+        <Field label="Nombre de la plantilla" required>
+          <input value={name} onChange={e=>setName(e.target.value)} placeholder="Ej: Góndolas supermercado grande"/>
+        </Field>
+        <Field label="Tipo">
+          <select value={type} onChange={e=>setType(e.target.value)}>
+            {JOB_TYPES.map(t=><option key={t} value={t}>{JOB_TYPE_ICONS[t]} {JOB_TYPE_LABELS[t]}</option>)}
+          </select>
+        </Field>
+        <div className="divider"/>
+        <div className="section-head"><h2>Tareas</h2></div>
+        {tasks.map((t,i)=>(
+          <div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0'}}>
+            <span style={{flex:1,fontSize:13}}>{t.title}</span>
+            <button onClick={()=>setTasks(ts=>ts.filter((_,j)=>j!==i))} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer'}}>✕</button>
+          </div>
+        ))}
+        <div className="input-row">
+          <Field><input value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="Nueva tarea..." onKeyPress={e=>e.key==='Enter'&&(setTasks(ts=>[...ts,{title:newTask.trim()}]),setNewTask(''))}/></Field>
+          <button className="btn btn-primary" onClick={()=>{if(newTask.trim()){setTasks(ts=>[...ts,{title:newTask.trim()}]);setNewTask('');}}}>+</button>
+        </div>
+        <div className="divider"/>
+        <div className="section-head"><h2>Materiales base</h2></div>
+        {materials.map((m,i)=>(
+          <div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0'}}>
+            <span style={{flex:1,fontSize:13}}>{m.name}</span>
+            <button onClick={()=>setMaterials(ms=>ms.filter((_,j)=>j!==i))} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer'}}>✕</button>
+          </div>
+        ))}
+        <div className="input-row">
+          <Field><input value={newMat} onChange={e=>setNewMat(e.target.value)} placeholder="Material..." onKeyPress={e=>e.key==='Enter'&&(setMaterials(ms=>[...ms,{name:newMat.trim(),qty:0,unit:'u'}]),setNewMat(''))}/></Field>
+          <button className="btn btn-primary" onClick={()=>{if(newMat.trim()){setMaterials(ms=>[...ms,{name:newMat.trim(),qty:0,unit:'u'}]);setNewMat('');}}}>+</button>
+        </div>
+        <div className="divider"/>
+        <div className="section-head"><h2>EPP requerido</h2></div>
+        {safetyEquipment.map((s,i)=>(
+          <div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0'}}>
+            <span style={{flex:1,fontSize:13}}>🦺 {s.name}</span>
+            <button onClick={()=>setSafetyEquipment(se=>se.filter((_,j)=>j!==i))} style={{background:'none',border:'none',color:'var(--red)',cursor:'pointer'}}>✕</button>
+          </div>
+        ))}
+        <div className="input-row">
+          <Field><input value={newSafety} onChange={e=>setNewSafety(e.target.value)} placeholder="EPP..." onKeyPress={e=>e.key==='Enter'&&(setSafetyEquipment(se=>[...se,{name:newSafety.trim()}]),setNewSafety(''))}/></Field>
+          <button className="btn btn-primary" onClick={()=>{if(newSafety.trim()){setSafetyEquipment(se=>[...se,{name:newSafety.trim()}]);setNewSafety('');}}}>+</button>
+        </div>
+        <div className="divider"/>
+        <button className="btn btn-primary btn-full" onClick={save} disabled={saving} style={{fontSize:15,padding:14}}>
+          {saving?'Guardando...':'💾 Guardar plantilla'}
+        </button>
+        <div style={{height:20}}/>
+      </div>
+    </div>
+  );
+}
+
+// ─── ENTRY POINT ─────────────────────────────────────────────────────────────
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
